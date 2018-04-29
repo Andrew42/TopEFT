@@ -90,7 +90,9 @@ def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts):
 
     # For cmsconnect running
     #debug_file = "%s.debug" % (setup)
-    #run_process(["nohup","./submit_cmsconnect_gridpack_generation.sh",setup,target_dir,"1","15 Gb",">",debug_file,"2>&1","&"])
+    #cmsconnect_cores = 1
+    #run_process(["nohup","./submit_cmsconnect_gridpack_generation.sh",setup,target_dir,cmsconnect_cores,"15 Gb",">",debug_file,"2>&1","&"])
+    #subprocess.check_call(["nohup","./submit_cmsconnect_gridpack_generation.sh",setup,target_dir,cmsconnect_cores,"15 Gb",">",debug_file,"2>&1","&"])
 
     # For batch running
     #run_process(['./submit_gridpack_generation.sh','15000','15000','1nd',setup,target_dir,'8nh'])
