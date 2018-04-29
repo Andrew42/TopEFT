@@ -4,7 +4,8 @@
 # define pathes (can be kept as is)
 EFTMCPATH=`pwd -P`
 # path should end with genproductions 
-GENPRODPATH=${EFTMCPATH}/../../genproductions                                                                                                                                                                      
+GENPRODPATH=${EFTMCPATH}/../../genproductions
+#GENPRODPATH="/local-scratch/awightma/genproductions"
 ### end of settings 
 
 ### check out official genproduction repo, currently branch 2.6 

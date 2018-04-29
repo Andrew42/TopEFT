@@ -88,9 +88,12 @@ def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts):
     # TODO: Move the tarball out of the directory it is placed in and remove the old directory
     #tarball = '%s_%s_%s_tarball.tar.xz' % (setup,CURR_ARCH,CURR_RELEASE)
 
+    # For cmsconnect running
+    #debug_file = "%s.debug" % (setup)
+    #run_process(["nohup","./submit_cmsconnect_gridpack_generation.sh",setup,target_dir,"1","15 Gb",">",debug_file,"2>&1","&"])
 
     # For batch running
-    run_process(['./submit_gridpack_generation.sh','15000','15000','1nd',setup,target_dir,'8nh'])
+    #run_process(['./submit_gridpack_generation.sh','15000','15000','1nd',setup,target_dir,'8nh'])
 
     # Not currently working
     #run_process(['./submit_condor_gridpack_generation.sh',setup,target_dir])
