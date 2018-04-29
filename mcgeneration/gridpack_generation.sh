@@ -63,7 +63,7 @@ make_gridpack () {
       git status
       echo "Current git revision is:"
       git rev-parse HEAD
-      git diff | cat
+      #git diff | cat
       cd -
     fi
     
@@ -499,7 +499,10 @@ make_gridpack () {
     #   set +e
       cat makegrid.dat | ./bin/generate_events pilotrun
       echo "finished pilot run"
-    
+   
+      #awightma
+      #exit 1
+ 
       cd $WORKDIR
       
     #   echo "creating debug tarball"
@@ -520,6 +523,11 @@ make_gridpack () {
       tar -xzf $WORKDIR/pilotrun_gridpack.tar.gz
       echo "cleaning temporary gridpack"
       rm $WORKDIR/pilotrun_gridpack.tar.gz
+
+      # awightma start: Force the re-weight step to only use 1 core
+      echo "nb_core = 1" >> $WORKDIR/process/madevent/Cards/me5_configuration.txt
+      #tail -n15 $WORKDIR/process/madevent/Cards/me5_configuration.txt
+      # awightma end
       
       # precompile reweighting if necessary
       if [ -e $CARDSDIR/${name}_reweight_card.dat ]; then
