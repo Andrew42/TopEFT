@@ -19,11 +19,6 @@
 #If QUEUE_SELECTION is omitted, then run on local machine only (using multiple cores)    #
 ##########################################################################################
 
-# Workaround for weird cmsconnect numpy issue
-if [ $iscmsconnect -gt 0 ]; then
-  export PYTHONPATH=/cvmfs/cms.cern.ch/slc6_amd64_gcc630/external/py2-numpy/1.14.1-omkpbe2/lib/python2.7/site-packages:$PYTHONPATH
-fi
-
 # Create tarball with very aggressive xz settings.
 # (trade memory and cpu usage for compression ratio)
 make_tarball () {
@@ -163,13 +158,13 @@ make_gridpack () {
             #echo "set cluster_queue $queue" >> mgconfigscript
           fi 
           if [ $iscmsconnect -gt 0 ]; then
-    	  n_retries=10
-    	  long_wait=300
-    	  short_wait=120
+            n_retries=10
+            long_wait=300
+            short_wait=120
           else
-    	  n_retries=3
-    	  long_wait=60
-    	  short_wait=30
+            n_retries=3
+            long_wait=60
+            short_wait=30
           fi
           echo "set cluster_status_update $long_wait $short_wait" >> mgconfigscript
           echo "set cluster_nb_retry $n_retries" >> mgconfigscript
@@ -429,7 +424,7 @@ make_gridpack () {
     fi
     
     if [ "$isnlo" -gt "0" ]; then
-    #NLO mode  
+      #NLO mode  
       #######################
       #Run the integration and generate the grid
       #######################
@@ -466,7 +461,7 @@ make_gridpack () {
       fi
       
       echo "mg5_path = ../mgbasedir" >> ./Cards/amcatnlo_configuration.txt
-    #   echo "ninja = ../mgbasedir/HEPTools/lib" >> ./Cards/amcatnlo_configuration.txt
+      #echo "ninja = ../mgbasedir/HEPTools/lib" >> ./Cards/amcatnlo_configuration.txt
       echo "cluster_temp_path = None" >> ./Cards/amcatnlo_configuration.txt
     
       cd $WORKDIR
@@ -501,7 +496,7 @@ make_gridpack () {
       fi
       echo "done" >> makegrid.dat
     
-    #   set +e
+      #set +e
       cat makegrid.dat | ./bin/generate_events pilotrun
       echo "finished pilot run"
    
@@ -510,13 +505,13 @@ make_gridpack () {
  
       cd $WORKDIR
       
-    #   echo "creating debug tarball"
-    #   cp ${LOGFILE} ./gridpack_generation.log
-    #   DEBUGTARBALL=${name}_debug_tarball.tar.gz
-    #   tar -czps --ignore-failed-read -f ${DEBUGTARBALL} processtmp gridpack_generation.log
-    #   echo "moving tarball to ${PRODHOME}/${DEBUGTARBALL}"
-    #   mv ${DEBUGTARBALL} ${PRODHOME}/${DEBUGTARBALL}
-    #   set -e
+      #echo "creating debug tarball"
+      #cp ${LOGFILE} ./gridpack_generation.log
+      #DEBUGTARBALL=${name}_debug_tarball.tar.gz
+      #tar -czps --ignore-failed-read -f ${DEBUGTARBALL} processtmp gridpack_generation.log
+      #echo "moving tarball to ${PRODHOME}/${DEBUGTARBALL}"
+      #mv ${DEBUGTARBALL} ${PRODHOME}/${DEBUGTARBALL}
+      #set -e
       
       echo "cleaning temporary output"
       mv $WORKDIR/processtmp/pilotrun_gridpack.tar.gz $WORKDIR/
@@ -705,6 +700,13 @@ WORKDIR=$GEN_FOLDER/${name}_gridpack/work/
 
 is5FlavorScheme=-1
 if [ -z ${iscmsconnect:+x} ]; then iscmsconnect=0; fi
+
+# Workaround to numpy bug in CMSSW_9_3_0 under slc6_amd64_gcc630
+if [ $iscmsconnect -gt 0 ]; then
+  if [ "$cmssw_version" == "CMSSW_9_3_0" ] && [ "$scram_arch" == "slc6_amd64_gcc630" ]; then
+    export PYTHONPATH=/cvmfs/cms.cern.ch/slc6_amd64_gcc630/external/py2-numpy/1.14.1-omkpbe2/lib/python2.7/site-packages:$PYTHONPATH
+  fi
+fi
 
 if [ "${name}" != "interactive" ]; then
     # Make PIPESTATUS inherit make_gridpack return/exit codes

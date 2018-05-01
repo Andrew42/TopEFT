@@ -27,12 +27,12 @@ class RunType(object):
     CONDOR     = 'condor'
 
     @classmethod
-    def getModes(cls):
+    def getTypes(cls):
         return [cls.LOCAL,cls.LSF,cls.CMSCONNECT,cls.CONDOR]
 
     @classmethod
     def isValid(cls,rtype):
-        return rtype in cls.getModes()
+        return rtype in cls.getTypes()
 
 def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts,rtype='local'):
     if not RunType.isValid(rtype):
