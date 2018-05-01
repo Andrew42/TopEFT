@@ -1,6 +1,7 @@
 import os
 import subprocess
 import shutil
+import itertools
 import numpy as np
 
 # On lxplus requires: scl enable python27 bash
@@ -23,7 +24,7 @@ class RunType(object):
     LOCAL      = 'local'
     LSF        = 'lsf'
     CMSCONNECT = 'cmsconnect'
-    CONODR     = 'condor'
+    CONDOR     = 'condor'
 
     @classmethod
     def getModes(cls):
@@ -32,12 +33,6 @@ class RunType(object):
     @classmethod
     def isValid(cls,rtype):
         return rtype in cls.getModes()
-
-#RUN_LOCAL      = 'local'
-#RUN_LSF        = 'lsf'
-#RUN_CMSCONNECT = 'cmsconnect'
-#RUN_CONDOR     = 'condor'
-#RUN_TYPES      = [RUN_LOCAL,RUN_LSF,RUN_CMSCONNECT,RUN_CONDOR,RUN_TYPES]
 
 def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts,rtype='local'):
     if not RunType.isValid(rtype):
@@ -351,9 +346,9 @@ def main():
     batch_running = False
     run_type = RunType.LOCAL
 
-    #template_dir = "test_template"
+    template_dir = "test_template"
     #template_dir = "ttHJet_template"
-    template_dir = "TopEFTcuts_template"
+    #template_dir = "TopEFTcuts_template"
 
     #proc_card    = "ttbar.dat"
     #proc_name    = "ttbar"

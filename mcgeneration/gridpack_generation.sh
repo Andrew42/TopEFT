@@ -19,6 +19,11 @@
 #If QUEUE_SELECTION is omitted, then run on local machine only (using multiple cores)    #
 ##########################################################################################
 
+# Workaround for weird cmsconnect numpy issue
+if [ $iscmsconnect -gt 0 ]; then
+  export PYTHONPATH=/cvmfs/cms.cern.ch/slc6_amd64_gcc630/external/py2-numpy/1.14.1-omkpbe2/lib/python2.7/site-packages:$PYTHONPATH
+fi
+
 # Create tarball with very aggressive xz settings.
 # (trade memory and cpu usage for compression ratio)
 make_tarball () {
