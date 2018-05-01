@@ -2,7 +2,8 @@ import os
 import subprocess
 import shutil
 import itertools
-import numpy as np
+import random
+#import numpy as np
 
 # On lxplus requires: scl enable python27 bash
 
@@ -25,10 +26,11 @@ class RunType(object):
     LSF        = 'lsf'
     CMSCONNECT = 'cmsconnect'
     CONDOR     = 'condor'
+    NONE       = 'none'
 
     @classmethod
     def getTypes(cls):
-        return [cls.LOCAL,cls.LSF,cls.CMSCONNECT,cls.CONDOR]
+        return [cls.LOCAL,cls.LSF,cls.CMSCONNECT,cls.CONDOR,cls.NONE]
 
     @classmethod
     def isValid(cls,rtype):
@@ -58,7 +60,8 @@ def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts,rtype='lo
     proc_file    = "%s_%s" % (setup,MG_PROC_CARD)
 
     # Coefficient scan points
-    scan_pts = get_scan_points(limits,num_pts)
+    #scan_pts = get_scan_points_linspace(limits,num_pts)
+    scan_pts = get_scan_points_random(limits,num_pts)
     #scan_pts = get_1d_scan_points_random(limits,num_pts)
     #scan_pts = get_1d_scan_points_linspace(limits,num_pts)
 
@@ -93,7 +96,6 @@ def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts,rtype='lo
     )
 
     # Replace SUBSTEP in the process card
-    #p = subprocess.check_output(['sed','-i','-e',"s|SUBSETUP|%s|g" % (setup),"%s/%s" % (target_dir,proc_file)])    # Not present in python2.6
     run_process(['sed','-i','-e',"s|SUBSETUP|%s|g" % (setup),"%s/%s" % (target_dir,proc_file)])
 
 
@@ -111,7 +113,6 @@ def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts,rtype='lo
         debug_file = "%s.debug" % (setup)
         cmsconnect_cores = 1
         print '\t\tCurrent PATH: {0}'.format(os.getcwd())
-        print '\t\tDir: {0}'.format(os.listdir("."))
         print '\t\tWill execute: ./submit_cmsconnect_gridpack_generation.sh {0} {1} {2} "{3}" {4} {5}'.format(setup,target_dir,str(cmsconnect_cores), "15 Gb", CURR_ARCH, CURR_RELEASE)
         subprocess.Popen(
             ["./submit_cmsconnect_gridpack_generation.sh",setup,target_dir,str(cmsconnect_cores),"15 Gb", CURR_ARCH, CURR_RELEASE],
@@ -122,6 +123,8 @@ def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts,rtype='lo
         # Not currently working
         print "Condor running is not currently working. Sorry!"
         #run_process(['./submit_condor_gridpack_generation.sh',setup,target_dir])
+    elif rtype == RunType.NONE:
+        print "Skipping gridpack generation, %s" % (setup)
 
     return 0
 
@@ -193,7 +196,7 @@ def linspace(start,stop,num,endpoint=True,acc=7):
     return y
 
 # This works for multi-dim scans now
-def get_scan_points(limits,num_pts):
+def get_scan_points_linspace(limits,num_pts):
     sm_pt = {}
     for k in limits.keys():
         sm_pt[k] = 0.0
@@ -206,9 +209,7 @@ def get_scan_points(limits,num_pts):
     arr       = []
     for k,(start,low,high) in limits.iteritems():
         coeffs.append(k)
-        #arr += [np.linspace(low,high,num_pts)]
         arr += [linspace(low,high,num_pts)]
-    #mesh_pts = cartesian_product(*arr)
     mesh_pts = [a for a in itertools.product(*arr)]
     for rwgt_pt in mesh_pts:
         pt = {}
@@ -219,6 +220,28 @@ def get_scan_points(limits,num_pts):
             has_sm_pt = True
         if check_point(pt,start_pt):
             # Skip starting point
+            continue
+        rwgt_pts.append(pt)
+    if not has_sm_pt:
+        rwgt_pts.append(sm_pt)
+    return rwgt_pts
+
+# Samples points randomly in the N-dimensional WC space
+def get_scan_points_random(limits,num_pts):
+    sm_pt    = {}
+    start_pt = {}
+    for k,(start,low,high) in limits.iteritems():
+        sm_pt[k] = 0.0
+        start_pt[k] = start
+    has_sm_pt = check_point(sm_pt,start_pt)
+    rwgt_pts = []
+    for idx in range(num_pts):
+        pt = {}
+        for k,(start,low,high) in limits.iteritems():
+            pt[k] = random.uniform(low,high)
+        if check_point(pt,sm_pt):
+            has_sm_pt = True
+        if check_point(pt,start_pt):
             continue
         rwgt_pts.append(pt)
     if not has_sm_pt:
@@ -237,7 +260,7 @@ def get_1d_scan_points_random(limits,num_pts):
     for k1,(start,low,high) in limits.iteritems():
         for idx in range(num_pts):
             pt = {}
-            val = np.random.uniform(low,high)
+            val = random.uniform(low,high)
             pt[k1] = round(val,6)
             for k2 in limits.keys():
                 if k1 == k2:
@@ -266,7 +289,6 @@ def get_1d_scan_points_linspace(limits,num_pts):
         coeffs.append(k)
     has_sm_pt = check_point(sm_pt,start_pt)
     for k1 in coeffs:
-        #arr = np.linspace(limits[k1][1],limits[k1][2],num_pts)
         arr = linspace(limits[k1][1],limits[k1][2],num_pts)
         for val in arr:
             pt = {}
@@ -292,17 +314,6 @@ def check_point(pt1,pt2):
         if v != pt2[k]:
             return False
     return True
-
-# Perform a cartesian product
-#def cartesian_product(*arrays):
-#    # https://stackoverflow.com/questions/11144513
-#    la = len(arrays)
-#    #dtype = np.result_type(*arrays)    # Not present in numpy 1.4
-#    dtype = np.find_common_type([arr.dtype for arr in arrays], [])
-#    arr = np.empty([len(a) for a in arrays] + [la], dtype=dtype)
-#    for i, a in enumerate(np.ix_(*arrays)):
-#        arr[..., i] = a
-#    return arr.reshape(-1, la)
 
 # Sets the initial W.C. phase space point for MadGraph to start from
 def set_initial_point(file_name,limits):
@@ -340,21 +351,35 @@ def make_reweight_card(file_name,pts):
             f.write('\n')
     return file_name
 
+def parseLimitFile(fpath):
+    wc_limits = {}
+    with open(fpath,'r') as f:
+        for l in f:
+            arr = l.split()
+            if len(arr) != 3:
+                continue
+            wc_limits[arr[0]] = [float(arr[1]),float(arr[2])]
+    return wc_limits
+
 ####################################################################################################
 
 def main():
     batch_running = False
-    run_type = RunType.LOCAL
+    run_type = RunType.NONE
+    #run_type = RunType.CMSCONNECT
+
+    scan_type = 'random'
+    #scan_type = 'linspace'
 
     template_dir = "test_template"
     #template_dir = "ttHJet_template"
     #template_dir = "TopEFTcuts_template"
 
-    #proc_card    = "ttbar.dat"
-    #proc_name    = "ttbar"
+    proc_card    = "ttbar.dat"
+    proc_name    = "ttbar"
 
-    proc_card    = "ttll.dat"
-    proc_name    = "ttll"
+    #proc_card    = "ttll.dat"
+    #proc_name    = "ttll"
 
     #proc_card    = "ttlnu.dat"
     #proc_name    = "ttlnu"
@@ -370,6 +395,8 @@ def main():
     grid_events = 10000
     seed  = 42
     cores = 1
+
+    wc_limits = parseLimitFile("wc_limits.txt")
 
     if batch_running:
         MAX_JOBS = 100   # Specifies that maximum number of jobs to try and submit at a time
@@ -389,7 +416,6 @@ def main():
             if count > MAX_JOBS:
                 break
             os.chdir(HOME_DIR)
-            #arr = np.linspace(low_lim,high_lim,3)
             arr = linspace(low_lim,high_lim,3)
             for idx,a  in enumerate(arr):
                 start_pt = round(arr[idx],6)
@@ -412,22 +438,45 @@ def main():
                 if not skipped:
                     count += 1
     else:
-        # Configurable parameters
-        coeff = 'ctG'
-        #arr = np.linspace(low_lim,high_lim,3)
-        arr = linspace(low_lim,high_lim,3)
-        for idx,a in enumerate(arr):
-            #if idx != 1:
-            #    continue
-            start_pt = round(arr[idx],6)
-            print "%d: %s" % (idx,start_pt)
-            setup  = "%s_%s_run%d" % (proc_name,coeff,idx)
+        if scan_type == 'random':
+            coeff_list = [
+                'ctp','cpQM','cpQ3','cpt','cptb','ctW', 'ctZ', 'cbW','ctG',
+                'cQl31','cQlM1','cQe1','ctl1','cte1','ctlS1','ctlT1',
+                'cQl32','cQlM2','cQe2','ctl2','cte2','ctlS2','ctlT2',
+                'cQl33','cQlM3','cQe3','ctl3','cte3','ctlS3','ctlT3',
+            ]
+            N = len(coeff_list)
+            num_pts = 1.2*(1+2*N+N*(N-1)/2)
+            num_pts = int(num_pts)
+            print "N-Pts:",num_pts
+            grp_tag = 'fullscan'
+            run_num = 0
+            setup  = "%s_%s_run%d" % (proc_name,grp_tag,run_num)
             limits = {}
-            limits['ctG'] = [start_pt,low_lim,high_lim]
-            #limits['cpQ3'] = [7.8,low_lim,high_lim]
-            #limits['ctZI'] = [9.8,low_lim,high_lim]
-            #limits['cpt']  = [-15.3,low_lim*3,high_lim*3]
-            #limits['cpQM'] = [-12.4,low_lim*3,high_lim*3]
+            for idx,c in enumerate(coeff_list):
+                key = "%s_%s" % (proc_name,c)
+                if not wc_limits.has_key(key):
+                    print "Missing fit limits for %s!" % (key)
+                    continue
+                low  = round(wc_limits[key][0],6)
+                high = round(wc_limits[key][1],6)
+                start_pt = round(random.uniform(low,high),6)
+                counter = 0
+                # Make sure the starting point isn't relatively close to 0 for any WC
+                while True:
+                    if counter > 999:
+                        print "Unable find valid starting point for %s!" % (key)
+                        return
+                    if start_pt < 0:
+                        if abs(start_pt)*2 > abs(low):
+                            break
+                    else:
+                        if abs(start_pt)*2 > abs(high):
+                            break
+                    start_pt = round(random.uniform(low,high),6)
+                    counter += 1
+                limits[c] = [start_pt,low,high]
+                print "%s:" % (key.ljust(11)),limits[c]
 
             setup_gridpack(
                 template_dir=template_dir,
@@ -438,17 +487,34 @@ def main():
                 num_pts=num_pts,
                 rtype=run_type
             )
-        
-            #run_gridpack(
-            #    setup=setup,
-            #    process=proc_name,
-            #    events=grid_events,
-            #    seed=seed,
-            #    cores=cores
-            #)
-
-            break
-
+        elif scan_type == 'linspace':
+            coeff = 'ctG'
+            arr = linspace(low_lim,high_lim,3)
+            for idx,a in enumerate(arr):
+                if idx != 1:
+                    continue
+                start_pt = round(arr[idx],6)
+                print "%d: %s" % (idx,start_pt)
+                setup  = "%s_%s_run%d" % (proc_name,coeff,idx)
+                limits = {}
+                limits['ctG'] = [start_pt,low_lim,high_lim]
+                setup_gridpack(
+                    template_dir=template_dir,
+                    setup=setup,
+                    process=proc_name,
+                    proc_card=proc_card,
+                    limits=limits,
+                    num_pts=num_pts,
+                    rtype=run_type
+                )
+                #run_gridpack(
+                #    setup=setup,
+                #    process=proc_name,
+                #    events=grid_events,
+                #    seed=seed,
+                #    cores=cores
+                #)
+                break
     print "\nFinished!"
 
 if __name__ == "__main__":
