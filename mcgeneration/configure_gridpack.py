@@ -2,7 +2,6 @@ import os
 import subprocess
 import shutil
 import numpy as np
-#import numpy
 
 # On lxplus requires: scl enable python27 bash
 
@@ -20,7 +19,29 @@ CURR_ARCH    = 'slc6_amd64_gcc630'
 CURR_RELEASE = 'CMSSW_9_3_0'
 GRIDRUN_DIR  = 'gridruns'
 
-def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts):
+class RunType(object):
+    LOCAL      = 'local'
+    LSF        = 'lsf'
+    CMSCONNECT = 'cmsconnect'
+    CONODR     = 'condor'
+
+    @classmethod
+    def getModes(cls):
+        return [cls.LOCAL,cls.LSF,cls.CMSCONNECT,cls.CONDOR]
+
+    @classmethod
+    def isValid(cls,rtype):
+        return rtype in cls.getModes()
+
+#RUN_LOCAL      = 'local'
+#RUN_LSF        = 'lsf'
+#RUN_CMSCONNECT = 'cmsconnect'
+#RUN_CONDOR     = 'condor'
+#RUN_TYPES      = [RUN_LOCAL,RUN_LSF,RUN_CMSCONNECT,RUN_CONDOR,RUN_TYPES]
+
+def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts,rtype='local'):
+    if not RunType.isValid(rtype):
+        raise ValueError("%s is not a valid run type!" % (rtype))
     os.chdir(HOME_DIR)
 
     tarball = '%s_%s_%s_tarball.tar.xz' % (setup,CURR_ARCH,CURR_RELEASE)
@@ -43,6 +64,8 @@ def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts):
 
     # Coefficient scan points
     scan_pts = get_scan_points(limits,num_pts)
+    #scan_pts = get_1d_scan_points_random(limits,num_pts)
+    #scan_pts = get_1d_scan_points_linspace(limits,num_pts)
 
     target_dir = os.path.join(process_subdir,setup)
     if not os.path.exists(target_dir):
@@ -82,23 +105,28 @@ def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts):
     # Run the gridpack generation step
     print "\tGenerating gridpack..."
 
-    # For interactive/serial running
-    #run_process(['./gridpack_generation.sh',setup,target_dir])
-
-    # TODO: Move the tarball out of the directory it is placed in and remove the old directory
-    #tarball = '%s_%s_%s_tarball.tar.xz' % (setup,CURR_ARCH,CURR_RELEASE)
-
-    # For cmsconnect running
-    #debug_file = "%s.debug" % (setup)
-    #cmsconnect_cores = 1
-    #run_process(["nohup","./submit_cmsconnect_gridpack_generation.sh",setup,target_dir,cmsconnect_cores,"15 Gb",">",debug_file,"2>&1","&"])
-    #subprocess.check_call(["nohup","./submit_cmsconnect_gridpack_generation.sh",setup,target_dir,cmsconnect_cores,"15 Gb",">",debug_file,"2>&1","&"])
-
-    # For batch running
-    #run_process(['./submit_gridpack_generation.sh','15000','15000','1nd',setup,target_dir,'8nh'])
-
-    # Not currently working
-    #run_process(['./submit_condor_gridpack_generation.sh',setup,target_dir])
+    if rtype == RunType.LOCAL:
+        # For interactive/serial running
+        run_process(['./gridpack_generation.sh',setup,target_dir])
+    elif rtype == RunType.LSF:
+        # For batch running
+        run_process(['./submit_gridpack_generation.sh','15000','15000','1nd',setup,target_dir,'8nh'])
+    elif rtype == RunType.CMSCONNECT:
+        # For cmsconnect running
+        debug_file = "%s.debug" % (setup)
+        cmsconnect_cores = 1
+        print '\t\tCurrent PATH: {0}'.format(os.getcwd())
+        print '\t\tDir: {0}'.format(os.listdir("."))
+        print '\t\tWill execute: ./submit_cmsconnect_gridpack_generation.sh {0} {1} {2} "{3}" {4} {5}'.format(setup,target_dir,str(cmsconnect_cores), "15 Gb", CURR_ARCH, CURR_RELEASE)
+        subprocess.Popen(
+            ["./submit_cmsconnect_gridpack_generation.sh",setup,target_dir,str(cmsconnect_cores),"15 Gb", CURR_ARCH, CURR_RELEASE],
+            stdout=open(debug_file,'w'),
+            stderr=subprocess.STDOUT
+        )
+    elif rtype == RunType.CONDOR:
+        # Not currently working
+        print "Condor running is not currently working. Sorry!"
+        #run_process(['./submit_condor_gridpack_generation.sh',setup,target_dir])
 
     return 0
 
@@ -150,14 +178,30 @@ def run_process(inputs):
             print l.strip()
     return
 
+# Returns a list of linear spaced numbers
+def linspace(start,stop,num,endpoint=True,acc=7):
+    if num < 0:
+        raise ValueError("Number of samples, %s, must be non-negative." % num)
+    acc = max(0,acc)
+    acc = min(15,acc)
+    div = (num - 1) if endpoint else num
+    delta = stop - start
+    if num > 1:
+        step = delta / div
+        y = [round((start + step*idx),acc) for idx in range(num)]
+    elif num == 1:
+        y = [start]
+    else:
+        y = []
+    if endpoint and num > 1:
+        y[-1] = stop
+    return y
+
 # This works for multi-dim scans now
 def get_scan_points(limits,num_pts):
-    #sm_pt     = {k: 0.0 for k in limits.keys()}
     sm_pt = {}
     for k in limits.keys():
         sm_pt[k] = 0.0
-
-    #start_pt  = {k: arr[0] for k,arr in limits.iteritems()}
     start_pt = {}
     for k,arr in limits.iteritems():
         start_pt[k] = arr[0]
@@ -167,10 +211,11 @@ def get_scan_points(limits,num_pts):
     arr       = []
     for k,(start,low,high) in limits.iteritems():
         coeffs.append(k)
-        arr += [np.linspace(low,high,num_pts)]
-    mesh_pts = cartesian_product(*arr)
+        #arr += [np.linspace(low,high,num_pts)]
+        arr += [linspace(low,high,num_pts)]
+    #mesh_pts = cartesian_product(*arr)
+    mesh_pts = [a for a in itertools.product(*arr)]
     for rwgt_pt in mesh_pts:
-        #pt = {k: round(rwgt_pt[idx],6) for idx,k in enumerate(coeffs)}
         pt = {}
         for idx,k in enumerate(coeffs):
             pt[k] = round(rwgt_pt[idx],6)
@@ -185,6 +230,65 @@ def get_scan_points(limits,num_pts):
         rwgt_pts.append(sm_pt)
     return rwgt_pts
 
+# Temporary hacked version to do multiple 1-d scans in a single re-weight
+def get_1d_scan_points_random(limits,num_pts):
+    sm_pt    = {}
+    start_pt = {}
+    for k,(start,low,high) in limits.iteritems():
+        sm_pt[k] = 0.0
+        start_pt[k] = start
+    has_sm_pt = check_point(sm_pt,start_pt)
+    rwgt_pts = []
+    for k1,(start,low,high) in limits.iteritems():
+        for idx in range(num_pts):
+            pt = {}
+            val = np.random.uniform(low,high)
+            pt[k1] = round(val,6)
+            for k2 in limits.keys():
+                if k1 == k2:
+                    continue
+                else:
+                    pt[k1] = 0.0
+            if check_point(pt,sm_pt):
+                has_sm_pt = True
+            if check_point(pt,start_pt):
+                continue
+            rwgt_pts.append(pt)
+    if not has_sm_pt:
+        rwgt_pts.append(sm_pt)
+    return rwgt_pts
+
+# Temporary hacked version to do multiple 1-d scans in a single re-weight with linear spacing
+def get_1d_scan_points_linspace(limits,num_pts):
+    sm_pt = {}
+    for k in limits.keys():
+        sm_pt[k] = 0.0
+    rwgt_pts  = []
+    start_pt  = {}
+    coeffs    = []
+    for k,arr in limits.iteritems():
+        start_pt[k] = arr[0]
+        coeffs.append(k)
+    has_sm_pt = check_point(sm_pt,start_pt)
+    for k1 in coeffs:
+        #arr = np.linspace(limits[k1][1],limits[k1][2],num_pts)
+        arr = linspace(limits[k1][1],limits[k1][2],num_pts)
+        for val in arr:
+            pt = {}
+            for k2 in coeffs:
+                if k1 == k2:
+                    pt[k2] = round(val,6)
+                else:
+                    pt[k2] = 0.0
+            if check_point(pt,sm_pt):
+                has_sm_pt = True
+            if check_point(pt,start_pt):
+                continue
+            rwgt_pts.append(pt)
+    if not has_sm_pt:
+        rwgt_pts.append(sm_pt)
+    return rwgt_pts
+
 # Checks if two W.C. phase space points are identical
 def check_point(pt1,pt2):
     for k,v in pt1.iteritems():
@@ -195,15 +299,15 @@ def check_point(pt1,pt2):
     return True
 
 # Perform a cartesian product
-def cartesian_product(*arrays):
-    # https://stackoverflow.com/questions/11144513
-    la = len(arrays)
-    #dtype = np.result_type(*arrays)    # Not present in numpy 1.4
-    dtype = np.find_common_type([arr.dtype for arr in arrays], [])
-    arr = np.empty([len(a) for a in arrays] + [la], dtype=dtype)
-    for i, a in enumerate(np.ix_(*arrays)):
-        arr[..., i] = a
-    return arr.reshape(-1, la)
+#def cartesian_product(*arrays):
+#    # https://stackoverflow.com/questions/11144513
+#    la = len(arrays)
+#    #dtype = np.result_type(*arrays)    # Not present in numpy 1.4
+#    dtype = np.find_common_type([arr.dtype for arr in arrays], [])
+#    arr = np.empty([len(a) for a in arrays] + [la], dtype=dtype)
+#    for i, a in enumerate(np.ix_(*arrays)):
+#        arr[..., i] = a
+#    return arr.reshape(-1, la)
 
 # Sets the initial W.C. phase space point for MadGraph to start from
 def set_initial_point(file_name,limits):
@@ -243,14 +347,13 @@ def make_reweight_card(file_name,pts):
 
 ####################################################################################################
 
-#nohup python configure_gridpack.py >& config_grid.log &
-#Currently running on: lxplus082
-
 def main():
-    batch_running = True
+    batch_running = False
+    run_type = RunType.LOCAL
 
-    template_dir = "test_template"
+    #template_dir = "test_template"
     #template_dir = "ttHJet_template"
+    template_dir = "TopEFTcuts_template"
 
     #proc_card    = "ttbar.dat"
     #proc_name    = "ttbar"
@@ -290,10 +393,9 @@ def main():
         for coeff in coeff_list:
             if count > MAX_JOBS:
                 break
-
             os.chdir(HOME_DIR)
-            #setup = "%s_%s" % (proc_name,coeff)
-            arr = np.linspace(low_lim,high_lim,3)
+            #arr = np.linspace(low_lim,high_lim,3)
+            arr = linspace(low_lim,high_lim,3)
             for idx,a  in enumerate(arr):
                 start_pt = round(arr[idx],6)
                 print "%d: %s" % (idx,start_pt)
@@ -308,32 +410,29 @@ def main():
                     process=proc_name,
                     proc_card=proc_card,
                     limits=limits,
-                    num_pts=num_pts
+                    num_pts=num_pts,
+                    rtype=run_type
                 )
 
                 if not skipped:
                     count += 1
     else:
         # Configurable parameters
-
-        #idx = 0
-        #if idx < 0 or idx >= num_pts:
-        #    print "Invalid index!"
-        #    return
-
         coeff = 'ctG'
-        arr = np.linspace(low_lim,high_lim,3)
+        #arr = np.linspace(low_lim,high_lim,3)
+        arr = linspace(low_lim,high_lim,3)
         for idx,a in enumerate(arr):
-            if idx != 1:
-                continue
+            #if idx != 1:
+            #    continue
             start_pt = round(arr[idx],6)
             print "%d: %s" % (idx,start_pt)
             setup  = "%s_%s_run%d" % (proc_name,coeff,idx)
-            limits = {
-                'ctG':  [start_pt,low_lim,high_lim],
-                #'ctGI': [start_pt,low_lim,high_lim],
-                #'cQq81': [start_pt,low_lim,high_lim],
-            }
+            limits = {}
+            limits['ctG'] = [start_pt,low_lim,high_lim]
+            #limits['cpQ3'] = [7.8,low_lim,high_lim]
+            #limits['ctZI'] = [9.8,low_lim,high_lim]
+            #limits['cpt']  = [-15.3,low_lim*3,high_lim*3]
+            #limits['cpQM'] = [-12.4,low_lim*3,high_lim*3]
 
             setup_gridpack(
                 template_dir=template_dir,
@@ -341,7 +440,8 @@ def main():
                 process=proc_name,
                 proc_card=proc_card,
                 limits=limits,
-                num_pts=num_pts
+                num_pts=num_pts,
+                rtype=run_type
             )
         
             #run_gridpack(

@@ -5,6 +5,7 @@
 EFTMCPATH=`pwd -P`
 # path should end with genproductions 
 GENPRODPATH=${EFTMCPATH}/../../genproductions
+# path for cmsconnect submit node
 #GENPRODPATH="/local-scratch/awightma/genproductions"
 ### end of settings 
 
@@ -20,7 +21,7 @@ else
     git clone -b mg26x https://github.com/cms-sw/genproductions.git genproductions 
     cd ${GENPRODPATH}
     # copy relevant code  
-    for FILE in addons patches Utilities runcmsgrid_LO.sh gridpack_generation.sh submit_madpack_ttbareft.sh configure_gridpack.py transfer_gridpacks.py ; do 
+    for FILE in addons patches Utilities runcmsgrid_LO.sh gridpack_generation.sh submit_madpack_ttbareft.sh configure_gridpack.py transfer_gridpacks.py submit_cmsconnect_gridpack_generation.sh ; do 
 	cp -r ${EFTMCPATH}/${FILE} ${GENPRODPATH}/bin/MadGraph5_aMCatNLO/.
     done
     cd ${GENPRODPATH}/.

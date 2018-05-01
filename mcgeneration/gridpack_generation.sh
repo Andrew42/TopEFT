@@ -86,8 +86,8 @@ make_gridpack () {
     
       cd $GEN_FOLDER
     
-    #   export SCRAM_ARCH=slc6_amd64_gcc472 #Here one should select the correct architechture corresponding with the CMSSW release
-    #   export RELEASE=CMSSW_5_3_32_patch3
+      #export SCRAM_ARCH=slc6_amd64_gcc472 #Here one should select the correct architechture corresponding with the CMSSW release
+      #export RELEASE=CMSSW_5_3_32_patch3
     
       export SCRAM_ARCH=${scram_arch}
       export RELEASE=${cmssw_version}
@@ -138,9 +138,9 @@ make_gridpack () {
       if [ $iscmsconnect -gt 0 ]; then
         echo "set output_dependencies internal" >> mgconfigscript
       fi
-    #  echo "set output_dependencies internal" >> mgconfigscript
+      #echo "set output_dependencies internal" >> mgconfigscript
       echo "set lhapdf $LHAPDFCONFIG" >> mgconfigscript
-    #   echo "set ninja $PWD/HEPTools/lib" >> mgconfigscript
+      #echo "set ninja $PWD/HEPTools/lib" >> mgconfigscript
     
       if [ "$queue" == "local" ]; then
           echo "set run_mode 2" >> mgconfigscript
@@ -155,7 +155,7 @@ make_gridpack () {
           else
             echo "set cluster_type lsf" >> mgconfigscript
             #*FIXME* broken in mg_amc 2.4.0
-    #         echo "set cluster_queue $queue" >> mgconfigscript
+            #echo "set cluster_queue $queue" >> mgconfigscript
           fi 
           if [ $iscmsconnect -gt 0 ]; then
     	  n_retries=10
@@ -173,7 +173,7 @@ make_gridpack () {
           if [[ ! "$RUNHOME" =~ ^/afs/.* ]]; then
               echo "local path is not an afs path, batch jobs will use worker node scratch space instead of afs"
               #*FIXME* broken in mg_amc 2.4.0
-    #           echo "set cluster_temp_path `echo $RUNHOME`" >> mgconfigscript 
+              #echo "set cluster_temp_path `echo $RUNHOME`" >> mgconfigscript 
               echo "set cluster_retry_wait 30" >> mgconfigscript 
               isscratchspace=1
           fi      
