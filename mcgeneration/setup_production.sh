@@ -5,8 +5,10 @@
 EFTMCPATH=`pwd -P`
 # path should end with genproductions 
 GENPRODPATH=${EFTMCPATH}/../../genproductions
-# path for cmsconnect submit node
-#GENPRODPATH="/local-scratch/awightma/genproductions"
+if [ "$(hostname)" == "login.uscms.org" ]; then
+    # path for cmsconnect submit node
+    GENPRODPATH="/local-scratch/${USER}/genproductions"
+fi
 ### end of settings 
 
 ### check out official genproduction repo, currently branch 2.6 

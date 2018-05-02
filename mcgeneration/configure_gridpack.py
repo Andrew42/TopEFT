@@ -415,10 +415,11 @@ def parse_limit_file(fpath):
 
 def main():
     batch_type = BatchType.NONE
+    scan_type  = ScanType.NONE
+
     #batch_type = BatchType.LOCAL
     #batch_type = BatchType.CMSCONNECT
 
-    scan_type = ScanType.NONE
     scan_type = ScanType.FRANDOM
 
     run_type = 'ndim_single_scan'
