@@ -96,8 +96,8 @@ prepare_reweight () {
         export PYTHONPATH=$rwgt_dir:$PYTHONPATH
         echo "0" | ./bin/aMCatNLO --debug reweight pilotrun
     else
-        #echo "0" | ./bin/madevent --debug reweight pilotrun
-        echo "0" | ./bin/madevent reweight pilotrun
+        echo "0" | ./bin/madevent --debug reweight pilotrun
+        #echo "0" | ./bin/madevent reweight pilotrun
     fi
 
     # Explicitly compile all subprocesses to avoid
