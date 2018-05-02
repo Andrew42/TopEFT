@@ -7,9 +7,10 @@ import random
 
 # On lxplus requires: scl enable python27 bash
 
-HOME_DIR = os.getcwd()
-CARD_DIR = os.path.join("addons","cards")           # Relative w.r.t HOME_DIR
-PROC_DIR = os.path.join(CARD_DIR,"process_cards")   # Relative w.r.t HOME_DIR
+HOME_DIR      = os.getcwd()
+CARD_DIR      = os.path.join("addons","cards")           # Relative w.r.t HOME_DIR
+LIMITS_DIR    = os.path.join("addons","limits")          # Relative w.r.t HOME_DIR
+PROC_CARD_DIR = os.path.join(CARD_DIR,"process_cards")   # Relative w.r.t HOME_DIR
 
 # MadGraph specific card naming
 MG_PROC_CARD     = 'proc_card.dat'
@@ -88,7 +89,7 @@ def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts,btype='lo
     elif stype == ScanType.NONE:
         scan_pts = []
 
-    save_scan_points("%s_scanpoints.txt" % (setup),limits,scan_points)
+    save_scan_points("%s_scanpoints.txt" % (setup),limits,scan_pts)
 
     target_dir = os.path.join(process_subdir,setup)
     if not os.path.exists(target_dir):
@@ -106,7 +107,7 @@ def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts,btype='lo
         os.path.join(target_dir,run_file)
     )
     shutil.copy(
-        os.path.join(HOME_DIR,PROC_DIR,proc_card),
+        os.path.join(HOME_DIR,PROC_CARD_DIR,proc_card),
         os.path.join(target_dir,proc_file)
     )
 
@@ -413,10 +414,13 @@ def parse_limit_file(fpath):
 
 def main():
     batch_type = BatchType.NONE
+    batch_type = BatchType.LOCAL
     #batch_type = BatchType.CMSCONNECT
 
+    scan_type = ScanType.NONE
+    scan_type = ScanType.FRANDOM
+
     run_type = 'ndim_single_scan'
-    #run_type = 'linspace'
 
     run_gridpack = False
 
@@ -445,7 +449,8 @@ def main():
     seed  = 42
     cores = 1
 
-    wc_limits = parse_limit_file("wc_limits.txt")
+    limits_fpath = os.path.join(LIMITS_DIR,"dim6top_LO_UFO_limits.txt")
+    wc_limits = parse_limit_file(limits_fpath)
 
     if batch_type != BatchType.NONE and batch_type != BatchType.LOCAL:
         # Don't let us try to run gridpacks when doing batch production!
