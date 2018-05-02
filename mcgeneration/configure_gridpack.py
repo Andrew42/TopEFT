@@ -263,7 +263,7 @@ def get_scan_points_random(limits,num_pts):
     for idx in range(num_pts):
         pt = {}
         for k,(start,low,high) in limits.iteritems():
-            pt[k] = random.uniform(low,high)
+            pt[k] = round(random.uniform(low,high),6)
         if check_point(pt,sm_pt):
             has_sm_pt = True
         if check_point(pt,start_pt):
@@ -385,13 +385,14 @@ def save_scan_points(fpath,limits,rwgt_pts):
         header = "".ljust(col_spacing)
         for c in coeffs:
             header += c.ljust(col_spacing) + col_sep
-        start_row = "\nMG_Start".ljust(col_spacing) + col_sep
+        start_row = "\nMGStart".ljust(col_spacing) + col_sep
         for c in coeffs:
             start_row += str(limits[c][0]).ljust(col_spacing) + col_sep
         f.write(header)
         f.write(start_row)
         for idx,pt in enumerate(rwgt_pts):
-            row = "\nrwgt%d".ljust(col_spacing) + col_sep
+            row_name = "rwgt%d" % (idx)
+            row = "\n" + row_name.ljust(col_spacing) + col_sep
             for c in coeffs:
                 if not pt.has_key(c):
                     row += "0.0".ljust(col_spacing) + col_sep
@@ -414,7 +415,7 @@ def parse_limit_file(fpath):
 
 def main():
     batch_type = BatchType.NONE
-    batch_type = BatchType.LOCAL
+    #batch_type = BatchType.LOCAL
     #batch_type = BatchType.CMSCONNECT
 
     scan_type = ScanType.NONE
