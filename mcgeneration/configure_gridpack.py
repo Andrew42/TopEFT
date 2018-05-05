@@ -424,6 +424,7 @@ def main():
     scan_type = ScanType.FRANDOM
 
     run_type = 'ndim_singlerun_scan'
+    #run_type = 'ndim_multirun_scan'
 
     run_gridpack = False
 
@@ -451,6 +452,8 @@ def main():
         #'cQl32','cQlM2','cQe2','ctl2','cte2','ctlS2','ctlT2',
         #'cQl33','cQlM3','cQe3','ctl3','cte3','ctlS3','ctlT3',
     ]
+
+    num_runs = 3
 
     low_lim  = -10.0
     high_lim =  10.0
@@ -530,7 +533,7 @@ def main():
             num_pts = 10    # Just needs to be >= 3
         num_pts = int(num_pts)
         print "N-Pts:",num_pts
-        for run_idx in len(num_runs):
+        for run_idx in range(num_runs):
             setup  = "%s_%s_run%d" % (proc_name,grp_tag,run_idx)
             limits = {}
             for idx,c in enumerate(coeff_list):
