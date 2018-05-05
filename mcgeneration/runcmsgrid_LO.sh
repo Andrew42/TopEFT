@@ -94,7 +94,7 @@ pushd process/madevent
 pdfsets="PDF_SETS_REPLACE"
 scalevars="--mur=1,2,0.5 --muf=1,2,0.5 --together=muf,mur,dyn --dyn=-1,1,2,3,4"
 
-#echo "systematics $runlabel --start_id=1001 --pdf=$pdfsets $scalevars" | ./bin/madevent
+echo "systematics $runlabel --start_id=1001 --pdf=$pdfsets $scalevars" | ./bin/madevent
 popd
 
 mv process/madevent/Events/${runlabel}/events.lhe.gz cmsgrid_final.lhe.gz

@@ -418,11 +418,12 @@ def main():
     scan_type  = ScanType.NONE
 
     #batch_type = BatchType.LOCAL
+    #batch_type = BatchType.LSF
     #batch_type = BatchType.CMSCONNECT
 
     scan_type = ScanType.FRANDOM
 
-    run_type = 'ndim_single_scan'
+    run_type = 'ndim_singlerun_scan'
 
     run_gridpack = False
 
@@ -430,8 +431,8 @@ def main():
     #template_dir = "ttHJet_template"
     #template_dir = "TopEFTcuts_template"
 
-    proc_card    = "ttbar.dat"
-    proc_name    = "ttbar"
+    proc_card    = "ttH.dat"
+    proc_name    = "ttH"
 
     #proc_card    = "ttll.dat"
     #proc_name    = "ttll"
@@ -441,6 +442,15 @@ def main():
 
     #proc_card    = "tllq.dat"
     #proc_name    = "tllq"
+
+    grp_tag = '2HeavyScan'
+
+    coeff_list = [
+        'ctp','cpQM','cpQ3','cpt','cptb','ctW', 'ctZ', 'cbW','ctG',
+        #'cQl31','cQlM1','cQe1','ctl1','cte1','ctlS1','ctlT1',
+        #'cQl32','cQlM2','cQe2','ctl2','cte2','ctlS2','ctlT2',
+        #'cQl33','cQlM3','cQe3','ctl3','cte3','ctlS3','ctlT3',
+    ]
 
     low_lim  = -10.0
     high_lim =  10.0
@@ -458,19 +468,15 @@ def main():
         # Don't let us try to run gridpacks when doing batch production!
         run_gridpack = False
 
-    if run_type == 'ndim_single_scan':
+    if run_type == 'ndim_singlerun_scan':
         # Produces a single gridpack which generates enough random rwgt points to extract a quadratic fit
-        coeff_list = [
-            'ctp','cpQM','cpQ3','cpt','cptb','ctW', 'ctZ', 'cbW','ctG',
-            'cQl31','cQlM1','cQe1','ctl1','cte1','ctlS1','ctlT1',
-            'cQl32','cQlM2','cQe2','ctl2','cte2','ctlS2','ctlT2',
-            'cQl33','cQlM3','cQe3','ctl3','cte3','ctlS3','ctlT3',
-        ]
         N = len(coeff_list)
-        num_pts = 1.2*(1+2*N+N*(N-1)/2)
+        if scan_type == ScanType.FRANDOM:
+            num_pts = 1.2*(1+2*N+N*(N-1)/2)
+        elif scan_type == ScanType.SLINSPACE:
+            num_pts = 10    # Just needs to be >= 3
         num_pts = int(num_pts)
         print "N-Pts:",num_pts
-        grp_tag = 'fullscan'
         run_num = 0
         setup  = "%s_%s_run%d" % (proc_name,grp_tag,run_num)
         limits = {}
@@ -515,18 +521,70 @@ def main():
                 seed=seed,
                 cores=cores
             )
-    elif run_type == '1d_multi_scan':
+    elif run_type == 'ndim_multirun_scan':
+        # Same as the 'dim_singlerun_scan', but produces multiple runs for each gridpack setup
+        N = len(coeff_list)
+        if scan_type == ScanType.FRANDOM:
+            num_pts = 1.2*(1+2*N+N*(N-1)/2)
+        elif scan_type == ScanType.SLINSPACE:
+            num_pts = 10    # Just needs to be >= 3
+        num_pts = int(num_pts)
+        print "N-Pts:",num_pts
+        for run_idx in len(num_runs):
+            setup  = "%s_%s_run%d" % (proc_name,grp_tag,run_idx)
+            limits = {}
+            for idx,c in enumerate(coeff_list):
+                key = "%s_%s" % (proc_name,c)
+                if not wc_limits.has_key(key):
+                    print "Missing fit limits for %s!" % (key)
+                    continue
+                low  = round(wc_limits[key][0],6)
+                high = round(wc_limits[key][1],6)
+                start_pt = round(random.uniform(low,high),6)
+                counter = 0
+                # Make sure the starting point isn't relatively close to 0 for any WC
+                while True:
+                    if counter > 999:
+                        raise ValueError("Unable find valid starting point for %s!" % (key))
+                    if start_pt < 0:
+                        if abs(start_pt)*2 > abs(low):
+                            break
+                    else:
+                        if abs(start_pt)*2 > abs(high):
+                            break
+                    start_pt = round(random.uniform(low,high),6)
+                    counter += 1
+                limits[c] = [start_pt,low,high]
+                print "%s:" % (key.ljust(11)),limits[c]
+            setup_gridpack(
+                template_dir=template_dir,
+                setup=setup,
+                process=proc_name,
+                proc_card=proc_card,
+                limits=limits,
+                num_pts=num_pts,
+                btype=batch_type,
+                stype=scan_type
+            )
+            if run_gridpack:
+                run_gridpack(
+                    setup=setup,
+                    process=proc_name,
+                    events=grid_events,
+                    seed=seed,
+                    cores=cores
+                )
+    elif run_type == '1d_multirun_scan':
         # Performs a 1-d scan for a particular WC and repeats for multiple MG starting points
-        coeff = 'ctG'
         arr = linspace(low_lim,high_lim,3)
         for idx,a in enumerate(arr):
             if idx != 1:
                 continue
             start_pt = round(arr[idx],6)
             print "%d: %s" % (idx,start_pt)
-            setup  = "%s_%s_run%d" % (proc_name,coeff,idx)
+            setup  = "%s_%s_run%d" % (proc_name,grp_tag,idx)
             limits = {}
-            limits[coeff] = [start_pt,low_lim,high_lim]
+            limits[grp_tag] = [start_pt,low_lim,high_lim]
             setup_gridpack(
                 template_dir=template_dir,
                 setup=setup,
@@ -546,7 +604,7 @@ def main():
                     cores=cores
                 )
     elif run_type == '1d_multi_batch_scan':
-        # Same as the 1d_multi_scan, but loops over a list of WC (1 per gridpack)
+        # Same as the 1d_multirun_scan, but loops over a list of WC (1 per gridpack)
         MAX_JOBS = 100   # Specifies that maximum number of jobs to try and submit at a time
         coeff_list = [
             'ctp','ctpI','cpQM','cpQ3','cpt','cpb','cptb','cptbI','ctW','ctZ','ctWI','ctZI','cbW','cbWI',
@@ -556,7 +614,6 @@ def main():
             'cQq83','cQq81','cQu8','cQd8','ctq8','ctu8','ctd8','cQq13','cQq11','cQu1','cQd1','ctq1','ctu1',
             'ctd1','cQQ1','cQQ8','cQt1','cQb1','ctt1','ctb1','cQt8','cQb8','ctb8'
         ]
-        #coeff_list = ['ctt1','cblSI1']
         count = 0
         for coeff in coeff_list:
             if count > MAX_JOBS:
