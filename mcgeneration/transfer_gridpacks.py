@@ -11,7 +11,7 @@ import subprocess
 MAX_TRANSFERS = 999  # Limit the number of transfers per code running
 def main():
     protocol = 'gsiftp://deepthought.crc.nd.edu'
-    outdir = '/hadoop/store/user/awightma/gridpack_scans/2018_05_03/'
+    outdir = '/hadoop/store/user/awightma/gridpack_scans/2018_05_06/'
     sub_dir = '/scanpoints/'
     failed_copies = []
     good_copies = []

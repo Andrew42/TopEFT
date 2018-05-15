@@ -22,6 +22,10 @@ CURR_ARCH    = 'slc6_amd64_gcc630'
 CURR_RELEASE = 'CMSSW_9_3_0'
 GRIDRUN_DIR  = 'gridruns'
 
+SAVE_DIAGRAMS = False   # Note: Need to modify generate_gridpack.sh if set to true (otherwise they get cleaned up)
+USE_COUPLING_MODEL = False
+COUPLING_STRING = "DIM6^2==1 DIM6_ctW^2==1"
+
 class BatchType(object):
     LOCAL      = 'local'
     LSF        = 'lsf'
@@ -98,15 +102,15 @@ def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts,btype='lo
         print "\tNOTE: The cards directory already exists, will overwrite existing cards."
 
     # Copy/Create the cards for the gridpack generation
-    shutil.copy(
+    shutil.copy(#Customize card
         os.path.join(HOME_DIR,CARD_DIR,template_dir,MG_CUSTOM_CARD),
         os.path.join(target_dir,custom_file)
     )
-    shutil.copy(
+    shutil.copy(#Run card
         os.path.join(HOME_DIR,CARD_DIR,template_dir,MG_RUN_CARD),
         os.path.join(target_dir,run_file)
     )
-    shutil.copy(
+    shutil.copy(#Process card
         os.path.join(HOME_DIR,PROC_CARD_DIR,proc_card),
         os.path.join(target_dir,proc_file)
     )
@@ -121,7 +125,21 @@ def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts,btype='lo
         scan_pts
     )
 
-    # Replace SUBSTEP in the process card
+    # Needed for using the dim6top_LO_UFO model with FCNC coeffs...
+    #run_process(['sed','-i','-e',"s|DIM6=1|FCNC=0 DIM6=1|g","%s/%s" % (target_dir,proc_file)])
+
+    if SAVE_DIAGRAMS:
+        # Remove the nojpeg option from the output line
+        print "\tSaving diagrams!"
+        run_process(['sed','-i','-e',"s|SUBSETUP -nojpeg|SUBSETUP|g","%s/%s" % (target_dir,proc_file)])
+
+    if USE_COUPLING_MODEL:
+        print "\tUsing each_coupling_order model!"
+        # Replace the default dim6 model with the 'coupling_orders' version
+        run_process(['sed','-i','-e',"s|dim6top_LO_UFO|dim6top_LO_UFO_each_coupling_order|g","%s/%s" % (target_dir,proc_file)])
+        run_process(['sed','-i','-e',"s|DIM6=1|%s|g" % (COUPLING_STRING),"%s/%s" % (target_dir,proc_file)])
+
+    # Replace SUBSETUP in the process card
     run_process(['sed','-i','-e',"s|SUBSETUP|%s|g" % (setup),"%s/%s" % (target_dir,proc_file)])
 
     # Run the gridpack generation step
@@ -422,6 +440,7 @@ def main():
     #batch_type = BatchType.CMSCONNECT
 
     scan_type = ScanType.FRANDOM
+    scan_type = ScanType.SLINSPACE
 
     run_type = 'ndim_singlerun_scan'
     #run_type = 'ndim_multirun_scan'
@@ -453,7 +472,9 @@ def main():
         #'cQl33','cQlM3','cQe3','ctl3','cte3','ctlS3','ctlT3',
     ]
 
+    # For multi-run jobs
     num_runs = 3
+    rstart,rend = [0,num_runs]
 
     low_lim  = -10.0
     high_lim =  10.0
@@ -579,15 +600,21 @@ def main():
                 )
     elif run_type == '1d_multirun_scan':
         # Performs a 1-d scan for a particular WC and repeats for multiple MG starting points
-        arr = linspace(low_lim,high_lim,3)
+        if len(coeff_list) != 1:
+            raise ValueError("Invalid coeff_list specified for %s:" % (run_type),coeff_list)
+        coeff = coeff_list[0]
+        scan_type=ScanType.SLINSPACE    # Force linear spaced sampling
+        arr = linspace(low_lim,high_lim,num_runs)
         for idx,a in enumerate(arr):
-            if idx != 1:
+            if idx < rstart or idx >= rend:
                 continue
+            #if idx != 1:
+            #    continue
             start_pt = round(arr[idx],6)
             print "%d: %s" % (idx,start_pt)
             setup  = "%s_%s_run%d" % (proc_name,grp_tag,idx)
             limits = {}
-            limits[grp_tag] = [start_pt,low_lim,high_lim]
+            limits[coeff] = [start_pt,low_lim,high_lim]
             setup_gridpack(
                 template_dir=template_dir,
                 setup=setup,
