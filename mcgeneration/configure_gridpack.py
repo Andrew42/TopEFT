@@ -26,6 +26,15 @@ SAVE_DIAGRAMS = False   # Note: Need to modify generate_gridpack.sh if set to tr
 USE_COUPLING_MODEL = False
 COUPLING_STRING = "DIM6^2==1 DIM6_ctW^2==1"
 
+ALL_COEFFS = [
+    'ctp','ctpI','cpQM','cpQ3','cpt','cpb','cptb','cptbI','ctW','ctZ','ctWI','ctZI','cbW','cbWI',
+    'ctG','ctGI','cQlM1','cQlM2','cQlM3','cQl31','cQl32','cQl33','cQe1','cQe2','cQe3','ctl1',
+    'ctl2','ctl3','cte1','cte2','cte3','ctlS1','ctlSI1','ctlS2','ctlSI2','ctlS3','ctlSI3','ctlT1',
+    'ctlTI1','ctlT2','ctlTI2','ctlT3','ctlTI3','cblS1','cblSI1','cblS2','cblSI2','cblS3','cblSI3',
+    'cQq83','cQq81','cQu8','cQd8','ctq8','ctu8','ctd8','cQq13','cQq11','cQu1','cQd1','ctq1','ctu1',
+    'ctd1','cQQ1','cQQ8','cQt1','cQb1','ctt1','ctb1','cQt8','cQb8','ctb8'
+]
+
 class BatchType(object):
     LOCAL      = 'local'
     LSF        = 'lsf'
@@ -64,7 +73,11 @@ def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts,btype='lo
     os.chdir(HOME_DIR)
 
     tarball = '%s_%s_%s_tarball.tar.xz' % (setup,CURR_ARCH,CURR_RELEASE)
+    scanfile = '%s_scanpoints.txt' % (setup)
     if os.path.exists(setup) or os.path.exists(tarball) or os.path.exists(os.path.join(GRIDRUN_DIR,process,setup)):
+        print "Skipping gridpack setup: %s" % (setup)
+        return 1
+    elif os.path.exists(scanfile):
         print "Skipping gridpack setup: %s" % (setup)
         return 1
     
@@ -93,7 +106,7 @@ def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts,btype='lo
     elif stype == ScanType.NONE:
         scan_pts = []
 
-    save_scan_points("%s_scanpoints.txt" % (setup),limits,scan_pts)
+    save_scan_points(scanfile,limits,scan_pts)
 
     target_dir = os.path.join(process_subdir,setup)
     if not os.path.exists(target_dir):
@@ -240,6 +253,8 @@ def linspace(start,stop,num,endpoint=True,acc=7):
 
 # This works for multi-dim scans now
 def get_scan_points_linspace(limits,num_pts):
+    if num_pts == 0:
+        return []
     sm_pt = {}
     for k in limits.keys():
         sm_pt[k] = 0.0
@@ -271,6 +286,8 @@ def get_scan_points_linspace(limits,num_pts):
 
 # Samples points randomly in the N-dimensional WC space
 def get_scan_points_random(limits,num_pts):
+    if num_pts == 0:
+        return []
     sm_pt    = {}
     start_pt = {}
     for k,(start,low,high) in limits.iteritems():
@@ -293,6 +310,8 @@ def get_scan_points_random(limits,num_pts):
 
 # Temporary hacked version to do multiple 1-d scans in a single re-weight
 def get_1d_scan_points_random(limits,num_pts):
+    if num_pts == 0:
+        return []
     sm_pt    = {}
     start_pt = {}
     for k,(start,low,high) in limits.iteritems():
@@ -321,6 +340,8 @@ def get_1d_scan_points_random(limits,num_pts):
 
 # Temporary hacked version to do multiple 1-d scans in a single re-weight with linear spacing
 def get_1d_scan_points_linspace(limits,num_pts):
+    if num_pts == 0:
+        return []
     sm_pt = {}
     for k in limits.keys():
         sm_pt[k] = 0.0
@@ -376,6 +397,9 @@ def make_reweight_card(file_name,pts):
     header += "#                       Reweight Module                           *\n"
     header += "#******************************************************************\n"
     header += "\nchange rwgt_dir rwgt\n"
+
+    if len(pts) == 0:
+        return file_name
 
     with open(file_name,'w') as f:
         f.write(header)
@@ -442,10 +466,12 @@ def main():
     scan_type = ScanType.FRANDOM
     scan_type = ScanType.SLINSPACE
 
-    run_type = 'ndim_singlerun_scan'
+    #run_type = 'ndim_singlerun_scan'
     #run_type = 'ndim_multirun_scan'
+    #run_type = '1d_multirun_scan'
+    run_type = '1d_multi_batch_scan'
 
-    run_gridpack = False
+    test_gridpack = False
 
     template_dir = "test_template"
     #template_dir = "ttHJet_template"
@@ -463,7 +489,7 @@ def main():
     #proc_card    = "tllq.dat"
     #proc_name    = "tllq"
 
-    grp_tag = '2HeavyScan'
+    grp_tag = '2HvyRef'
 
     coeff_list = [
         'ctp','cpQM','cpQ3','cpt','cptb','ctW', 'ctZ', 'cbW','ctG',
@@ -473,24 +499,32 @@ def main():
     ]
 
     # For multi-run jobs
-    num_runs = 3
+    num_runs = 7
     rstart,rend = [0,num_runs]
 
-    low_lim  = -10.0
-    high_lim =  10.0
-    start_pt = 10.0
-    num_pts  = 11
+    low_lim  = -20.0
+    high_lim =  20.0
+    start_pt = -20.0
+    num_pts  = 15
+
+    # Determines how close to 0 the randomly sampled WC strength can be
+    #NOTE: Range can be [1,inf] and smaller numbers force the point to be further away from 0
+    rand_factor = 2
 
     grid_events = 10000
     seed  = 42
     cores = 1
+
+    MAX_JOBS = 1   # Specifies that maximum number of jobs to try and submit at a time
+
+    random.seed()
 
     limits_fpath = os.path.join(LIMITS_DIR,"dim6top_LO_UFO_limits.txt")
     wc_limits = parse_limit_file(limits_fpath)
 
     if batch_type != BatchType.NONE and batch_type != BatchType.LOCAL:
         # Don't let us try to run gridpacks when doing batch production!
-        run_gridpack = False
+        test_gridpack = False
 
     if run_type == 'ndim_singlerun_scan':
         # Produces a single gridpack which generates enough random rwgt points to extract a quadratic fit
@@ -518,10 +552,10 @@ def main():
                 if counter > 999:
                     raise ValueError("Unable find valid starting point for %s!" % (key))
                 if start_pt < 0:
-                    if abs(start_pt)*2 > abs(low):
+                    if abs(start_pt)*rand_factor > abs(low):
                         break
                 else:
-                    if abs(start_pt)*2 > abs(high):
+                    if abs(start_pt)*rand_factor > abs(high):
                         break
                 start_pt = round(random.uniform(low,high),6)
                 counter += 1
@@ -537,7 +571,7 @@ def main():
             btype=batch_type,
             stype=scan_type
         )
-        if run_gridpack:
+        if test_gridpack:
             run_gridpack(
                 setup=setup,
                 process=proc_name,
@@ -546,7 +580,7 @@ def main():
                 cores=cores
             )
     elif run_type == 'ndim_multirun_scan':
-        # Same as the 'dim_singlerun_scan', but produces multiple runs for each gridpack setup
+        # Same as the 'ndim_singlerun_scan', but produces multiple runs for each gridpack setup
         N = len(coeff_list)
         if scan_type == ScanType.FRANDOM:
             num_pts = 1.2*(1+2*N+N*(N-1)/2)
@@ -571,10 +605,10 @@ def main():
                     if counter > 999:
                         raise ValueError("Unable find valid starting point for %s!" % (key))
                     if start_pt < 0:
-                        if abs(start_pt)*2 > abs(low):
+                        if abs(start_pt)*rand_factor > abs(low):
                             break
                     else:
-                        if abs(start_pt)*2 > abs(high):
+                        if abs(start_pt)*rand_factor > abs(high):
                             break
                     start_pt = round(random.uniform(low,high),6)
                     counter += 1
@@ -590,7 +624,7 @@ def main():
                 btype=batch_type,
                 stype=scan_type
             )
-            if run_gridpack:
+            if test_gridpack:
                 run_gridpack(
                     setup=setup,
                     process=proc_name,
@@ -603,13 +637,11 @@ def main():
         if len(coeff_list) != 1:
             raise ValueError("Invalid coeff_list specified for %s:" % (run_type),coeff_list)
         coeff = coeff_list[0]
-        scan_type=ScanType.SLINSPACE    # Force linear spaced sampling
+        scan_type = ScanType.SLINSPACE    # Force linear spaced sampling
         arr = linspace(low_lim,high_lim,num_runs)
         for idx,a in enumerate(arr):
             if idx < rstart or idx >= rend:
                 continue
-            #if idx != 1:
-            #    continue
             start_pt = round(arr[idx],6)
             print "%d: %s" % (idx,start_pt)
             setup  = "%s_%s_run%d" % (proc_name,grp_tag,idx)
@@ -625,7 +657,7 @@ def main():
                 btype=batch_type,
                 stype=scan_type
             )
-            if run_gridpack:
+            if test_gridpack:
                 run_gridpack(
                     setup=setup,
                     process=proc_name,
@@ -635,22 +667,16 @@ def main():
                 )
     elif run_type == '1d_multi_batch_scan':
         # Same as the 1d_multirun_scan, but loops over a list of WC (1 per gridpack)
-        MAX_JOBS = 100   # Specifies that maximum number of jobs to try and submit at a time
-        coeff_list = [
-            'ctp','ctpI','cpQM','cpQ3','cpt','cpb','cptb','cptbI','ctW','ctZ','ctWI','ctZI','cbW','cbWI',
-            'ctG','ctGI','cQlM1','cQlM2','cQlM3','cQl31','cQl32','cQl33','cQe1','cQe2','cQe3','ctl1',
-            'ctl2','ctl3','cte1','cte2','cte3','ctlS1','ctlSI1','ctlS2','ctlSI2','ctlS3','ctlSI3','ctlT1',
-            'ctlTI1','ctlT2','ctlTI2','ctlT3','ctlTI3','cblS1','cblSI1','cblS2','cblSI2','cblS3','cblSI3',
-            'cQq83','cQq81','cQu8','cQd8','ctq8','ctu8','ctd8','cQq13','cQq11','cQu1','cQd1','ctq1','ctu1',
-            'ctd1','cQQ1','cQQ8','cQt1','cQb1','ctt1','ctb1','cQt8','cQb8','ctb8'
-        ]
         count = 0
+        scan_type = ScanType.SLINSPACE  # Force linear spaced sampling
         for coeff in coeff_list:
-            if count > MAX_JOBS:
+            if count >= MAX_JOBS:
                 break
             os.chdir(HOME_DIR)
-            arr = linspace(low_lim,high_lim,3)
+            arr = linspace(low_lim,high_lim,num_runs)
             for idx,a  in enumerate(arr):
+                if count >= MAX_JOBS:
+                    break
                 start_pt = round(arr[idx],6)
                 print "%d: %s" % (idx,start_pt)
                 setup  = "%s_%s_run%d" % (proc_name,coeff,idx)
@@ -667,7 +693,7 @@ def main():
                     btype=batch_type,
                     stype=scan_type
                 )
-                if run_gridpack:
+                if test_gridpack:
                     run_gridpack(
                         setup=setup,
                         process=proc_name,
