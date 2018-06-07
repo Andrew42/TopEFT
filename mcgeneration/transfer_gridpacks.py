@@ -16,43 +16,51 @@ def main():
     failed_copies = []
     good_copies = []
 
-    transfer_files = getFilesToTransfer('.')
-    for idx,f in enumerate(transfer_files):
+    indent_lvl = 1
+    indent = "\t"*indent_lvl
+
+    process_whitelist = []
+    coeff_whitelist   = []
+    run_whitelist     = []
+
+    transfer_files = getFilesToTransfer('.',process_whitelist,coeff_whitelist,run_whitelist)
+    for idx,fn in enumerate(transfer_files):
         if idx > MAX_TRANSFERS:
             break
         bad_copy = False
-        remote_file = protocol+outdir+f
-        if "_scanpoints.txt" in f:
-            remote_file = protocol+outdir+sub_dir+f
+        remote_fn = protocol+outdir+fn
+        if "_scanpoints.txt" in fn:
+            remote_fn = protocol+outdir+sub_dir+fn
 
         print "#"*100
         
-        local_sz      = getFileSize(f)
-        local_chksum  = getCheckSum(f)
-        remote_sz     = getFileSize(remote_file)
-        remote_chksum = getCheckSum(remote_file) if remote_sz != -1 else -1
+        local_sz      = getFileSize(fn)
+        local_chksum  = getCheckSum(fn)
+        remote_sz     = getFileSize(remote_fn)
+        remote_chksum = getCheckSum(remote_fn) if remote_sz != -1 else -1
 
-        print "[%d/%d] Transfering File: %s" % (idx+1,len(transfer_files),f)
+        print "[%d/%d] Transfering File: %s" % (idx+1,len(transfer_files),fn)
+        continue
         if remote_chksum == local_chksum:
             # The file is already present and has correct checksum
-            print "\tRemote file already exists, skipping..."
+            print "%sRemote file already exists, skipping..." % (indent)
             print ""
             continue
 
-        print "\tTarget: %s" % (remote_file)
-        print "\tSize: %.2f MB" % (float(local_sz)/(1024*1024))
+        print "%sTarget: %s" % (indent,remote_fn)
+        print "%sSize: %.2f MB" % (indent,float(local_sz)/(1024*1024))
 
-        stdout_arr = run_process(['gfal-copy','-fp',f,remote_file])
-        copied_chksum = getCheckSum(remote_file)
+        stdout_arr = run_process(['gfal-copy','-fp',fn,remote_fn],indent=1)
+        copied_chksum = getCheckSum(remote_fn)
 
         result = ""
         if copied_chksum != local_chksum:
-            print "\tResult: FAILED"
-            failed_copies.append(f)
+            print "%sResult: FAILED" % (indent)
+            failed_copies.append(fn)
         else:
-            print "\tResult: SUCCESS"
-            good_copies.append(f)
-        print "\tDone!"
+            print "%sResult: SUCCESS" % (indent)
+            good_copies.append(fn)
+        print "%sDone!" % (indent)
 
     with open('failed_copies.log','w') as f:
         f.write('failed copies:\n')
@@ -68,7 +76,7 @@ def main():
     return
 
 # Get a list of all files to transfer
-def getFilesToTransfer(fdir='.'):
+def getFilesToTransfer(fdir='.',p_wl=[],c_wl=[],r_wl=[]):
     search_strs = ['_tarball.tar.xz','_scanpoints.txt']
     files = []
     for idx,f in enumerate(os.listdir(fdir)):
@@ -81,6 +89,14 @@ def getFilesToTransfer(fdir='.'):
         if len(arr) < 3:
             continue
         p,c,r = arr[:3]
+
+        if len(p_wl) > 0 and not p in p_wl:
+            continue
+        elif len(c_wl) > 0 and not c in c_wl:
+            continue
+        elif len(r_wl) > 0 and not r in r_wl:
+            continue
+
         cross_checks = [
             "%s_%s_%s_slc6_amd64_gcc630_CMSSW_9_3_0_tarball.tar.xz" % (p,c,r),
             "%s_%s_%s_scanpoints.txt" % (p,c,r)
@@ -116,7 +132,8 @@ def getCheckSum(f):
         return -1
     return arr[0].split()[1]
 
-def run_process(inputs,verbose=True):
+def run_process(inputs,verbose=True,indent=0):
+    indent_str = "\t"*indent
     p = subprocess.Popen(inputs,stdout=subprocess.PIPE)
     stdout = []
     while True:
@@ -125,7 +142,7 @@ def run_process(inputs,verbose=True):
             break
         if l:
             stdout.append(l.strip())
-            if verbose: print l.strip()
+            if verbose: print indent_str+l.strip()
     return stdout
 
 

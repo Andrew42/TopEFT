@@ -35,6 +35,33 @@ ALL_COEFFS = [
     'ctd1','cQQ1','cQQ8','cQt1','cQb1','ctt1','ctb1','cQt8','cQb8','ctb8'
 ]
 
+PROCESS_MAP = {
+    'ttH': {
+        'process_card': 'ttH.dat',
+        'template_dir': 'test_template'
+    },
+    'ttW': {
+        'process_card': 'ttW.dat',
+        'template_dir': 'test_template'
+    },
+    'ttZ': {
+        'process_card': 'ttZ.dat',
+        'template_dir': 'test_template'
+    },
+    'ttll': {
+        'process_card': 'ttll.dat',
+        'template_dir': 'test_template'
+    },
+    'ttlnu': {
+        'process_card': 'ttlnu.dat',
+        'template_dir': 'test_template'
+    },
+    'tllq': {
+        'process_card': 'tllq.dat',
+        'template_dir': 'test_template'
+    },
+}
+
 class BatchType(object):
     LOCAL      = 'local'
     LSF        = 'lsf'
@@ -473,24 +500,23 @@ def main():
 
     test_gridpack = False
 
-    template_dir = "test_template"
+    proc_name = 'ttH'
+    #proc_name = 'ttll'
+    #proc_name = 'ttlnu'
+    #proc_name = 'tllq'
+
+    if not PROCESS_MAP.has_key(proc_name):
+        print "Unknown process: %s" % (proc_name)
+        return
+    proc_card    = PROCESS_MAP[proc_name]['process_card']
+    template_dir = PROCESS_MAP[proc_name]['template_dir']
+
+    # In case we want to overwrite the default template directory to use
     #template_dir = "ttHJet_template"
     #template_dir = "TopEFTcuts_template"
 
-    proc_card    = "ttH.dat"
-    proc_name    = "ttH"
-
-    #proc_card    = "ttll.dat"
-    #proc_name    = "ttll"
-
-    #proc_card    = "ttlnu.dat"
-    #proc_name    = "ttlnu"
-
-    #proc_card    = "tllq.dat"
-    #proc_name    = "tllq"
-
     grp_tag = '2HvyRef'
-
+    
     coeff_list = [
         'ctp','cpQM','cpQ3','cpt','cptb','ctW', 'ctZ', 'cbW','ctG',
         #'cQl31','cQlM1','cQe1','ctl1','cte1','ctlS1','ctlT1',
@@ -505,17 +531,38 @@ def main():
     low_lim  = -20.0
     high_lim =  20.0
     start_pt = -20.0
-    num_pts  = 15
+    num_pts  = 15       # Sets a lower bound on the number of rwgt points
 
     # Determines how close to 0 the randomly sampled WC strength can be
     #NOTE: Range can be [1,inf] and smaller numbers force the point to be further away from 0
-    rand_factor = 2
+    rand_factor = 1.25
+
+    run_num = 0
+    MAX_JOBS = 1   # Specifies that maximum number of jobs to try and submit at a time
+    
+
+
+    pair_1 = ['ctW','ctZ']
+    pair_2 = ['ctp','cpQM']
+    pair_3 = ['cpQ3','cpt']
+    pair_4 = ['cptb','cbW','ctG']
+
+    run_type   = 'ndim_singlerun_scan'
+    #scan_type  = ScanType.FRANDOM
+    scan_type  = ScanType.SLINSPACE
+    coeff_list = pair_1
+    num_pts    = 10
+    run_num    = 0
+    grp_tag    = "".join(coeff_list)
+    #grp_tag    = grp_tag + "FullScan"
+    grp_tag    = grp_tag + "AxisScan"
+
+
+
 
     grid_events = 10000
     seed  = 42
     cores = 1
-
-    MAX_JOBS = 1   # Specifies that maximum number of jobs to try and submit at a time
 
     random.seed()
 
@@ -530,12 +577,11 @@ def main():
         # Produces a single gridpack which generates enough random rwgt points to extract a quadratic fit
         N = len(coeff_list)
         if scan_type == ScanType.FRANDOM:
-            num_pts = 1.2*(1+2*N+N*(N-1)/2)
+            num_pts = max(num_pts,1.2*(1+2*N+N*(N-1)/2))
         elif scan_type == ScanType.SLINSPACE:
-            num_pts = 10    # Just needs to be >= 3
+            num_pts = max(num_pts,3)    # Just needs to be >= 3
         num_pts = int(num_pts)
         print "N-Pts:",num_pts
-        run_num = 0
         setup  = "%s_%s_run%d" % (proc_name,grp_tag,run_num)
         limits = {}
         for idx,c in enumerate(coeff_list):
@@ -583,9 +629,9 @@ def main():
         # Same as the 'ndim_singlerun_scan', but produces multiple runs for each gridpack setup
         N = len(coeff_list)
         if scan_type == ScanType.FRANDOM:
-            num_pts = 1.2*(1+2*N+N*(N-1)/2)
+            num_pts = max(num_pts,1.2*(1+2*N+N*(N-1)/2))
         elif scan_type == ScanType.SLINSPACE:
-            num_pts = 10    # Just needs to be >= 3
+            num_pts = max(num_pts,3)    # Just needs to be >= 3
         num_pts = int(num_pts)
         print "N-Pts:",num_pts
         for run_idx in range(num_runs):
