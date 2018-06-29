@@ -10,6 +10,9 @@ import subprocess
 
 MAX_TRANSFERS = 999  # Limit the number of transfers per code running
 def main():
+    good_fname = 'good_copies.log'
+    bad_fname = 'failed_copies.log'
+
     protocol = 'gsiftp://deepthought.crc.nd.edu'
     outdir = '/hadoop/store/user/awightma/gridpack_scans/2018_05_06/'
     sub_dir = '/scanpoints/'
@@ -33,14 +36,13 @@ def main():
             remote_fn = protocol+outdir+sub_dir+fn
 
         print "#"*100
+        print "[%d/%d] Transfering File: %s" % (idx+1,len(transfer_files),fn)
         
         local_sz      = getFileSize(fn)
         local_chksum  = getCheckSum(fn)
         remote_sz     = getFileSize(remote_fn)
         remote_chksum = getCheckSum(remote_fn) if remote_sz != -1 else -1
 
-        print "[%d/%d] Transfering File: %s" % (idx+1,len(transfer_files),fn)
-        continue
         if remote_chksum == local_chksum:
             # The file is already present and has correct checksum
             print "%sRemote file already exists, skipping..." % (indent)
@@ -50,10 +52,14 @@ def main():
         print "%sTarget: %s" % (indent,remote_fn)
         print "%sSize: %.2f MB" % (indent,float(local_sz)/(1024*1024))
 
-        stdout_arr = run_process(['gfal-copy','-fp',fn,remote_fn],indent=1)
-        copied_chksum = getCheckSum(remote_fn)
+        try:
+            stdout_arr = run_process(['gfal-copy','-fp',fn,remote_fn],indent=1)
+            copied_chksum = getCheckSum(remote_fn)
+        except KeyboardInterrupt:
+            print "Ending early!"
+            failed_copies.append(fn)
+            break
 
-        result = ""
         if copied_chksum != local_chksum:
             print "%sResult: FAILED" % (indent)
             failed_copies.append(fn)
@@ -62,13 +68,13 @@ def main():
             good_copies.append(fn)
         print "%sDone!" % (indent)
 
-    with open('failed_copies.log','w') as f:
+    with open(bad_fname,'w') as f:
         f.write('failed copies:\n')
         for fname in failed_copies:
             f.write(fname)
             f.write('\n')
 
-    with open('good_copies.log','w') as f:
+    with open(good_fname,'w') as f:
         f.write('good copies:\n')
         for fname in good_copies:
             f.write(fname)
