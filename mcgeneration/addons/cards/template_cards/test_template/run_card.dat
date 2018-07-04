@@ -47,6 +47,8 @@
      lhapdf    = pdlabel     ! PDF set                                     
 # NNPDF30_lo_as_0130
      263000    = lhaid     ! if pdlabel=lhapdf, this is the lhapdf number
+# NNPDF31_nnlo_hessian_pdfas
+     #306000    = lhaid     ! if pdlabel=lhapdf, this is the lhapdf number
 #*********************************************************************
 # Renormalization and factorization scales                           *
 #*********************************************************************

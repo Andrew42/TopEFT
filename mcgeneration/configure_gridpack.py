@@ -43,30 +43,31 @@ ANALYSIS_COEFFS = [ # As suggested by Adam
     'cQl33','cQlM3','cQe3','ctl3','cte3','ctlS3','ctlT3',
 ]
 
+#NOTE: The template directory should contain run_card.dat and customizecards.dat files
 PROCESS_MAP = {
     'ttH': {
         'process_card': 'ttH.dat',
-        'template_dir': 'test_template'
+        'template_dir': 'template_cards/test_template'
     },
     'ttW': {
         'process_card': 'ttW.dat',
-        'template_dir': 'test_template'
+        'template_dir': 'template_cards/test_template'
     },
     'ttZ': {
         'process_card': 'ttZ.dat',
-        'template_dir': 'test_template'
+        'template_dir': 'template_cards/test_template'
     },
     'ttll': {
         'process_card': 'ttll.dat',
-        'template_dir': 'test_template'
+        'template_dir': 'template_cards/test_template'
     },
     'ttlnu': {
         'process_card': 'ttlnu.dat',
-        'template_dir': 'test_template'
+        'template_dir': 'template_cards/test_template'
     },
     'tllq': {
         'process_card': 'tllq.dat',
-        'template_dir': 'test_template'
+        'template_dir': 'template_cards/test_template'
     },
 }
 
