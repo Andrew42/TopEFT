@@ -6,6 +6,8 @@ import random
 import time
 #import numpy as np
 
+from helper_tools import *
+
 # On lxplus using numpy requires: scl enable python27 bash
 
 HOME_DIR      = os.getcwd()
@@ -69,38 +71,13 @@ PROCESS_MAP = {
         'process_card': 'tllq.dat',
         'template_dir': 'template_cards/test_template'
     },
+    'ttHJet': {
+        'process_card': 'ttHJet.dat',
+        'template_dir': 'template_cards/jets_template'
+    }
 }
 
-class BatchType(object):
-    LOCAL      = 'local'
-    LSF        = 'lsf'
-    CMSCONNECT = 'cmsconnect'
-    CONDOR     = 'condor'
-    NONE       = 'none'
-
-    @classmethod
-    def getTypes(cls):
-        return [cls.LOCAL,cls.LSF,cls.CMSCONNECT,cls.CONDOR,cls.NONE]
-
-    @classmethod
-    def isValid(cls,btype):
-        return btype in cls.getTypes()
-
-class ScanType(object):
-    FRANDOM   = 'full_random'
-    SRANDOM   = '1d_random'
-    FLINSPACE = 'full_linspace'
-    SLINSPACE = '1d_linspace'
-    NONE      = 'none'
-
-    @classmethod
-    def getTypes(cls):
-        return [cls.FRANDOM,cls.SRANDOM,cls.FLINSPACE,cls.SLINSPACE,cls.NONE]
-
-    @classmethod
-    def isValid(cls,stype):
-        return stype in cls.getTypes()
-
+# Setup/Create the needed folders and files for creating a gridpack
 def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts,btype='local',stype='full_linspace'):
     if not BatchType.isValid(btype):
         raise ValueError("%s is not a valid batch type!" % (btype))
@@ -112,10 +89,10 @@ def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts,btype='lo
     scanfile = '%s_scanpoints.txt' % (setup)
     if os.path.exists(setup) or os.path.exists(tarball) or os.path.exists(os.path.join(GRIDRUN_DIR,process,setup)):
         print "Skipping gridpack setup: %s" % (setup)
-        return 1
+        return
     elif os.path.exists(scanfile):
         print "Skipping gridpack setup: %s" % (setup)
-        return 1
+        return
     
     print "Creating Gridpack: %s" % (setup)
     print "\tSetting up cards..."
@@ -131,16 +108,7 @@ def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts,btype='lo
     proc_file    = "%s_%s" % (setup,MG_PROC_CARD)
 
     # Coefficient scan points
-    if stype == ScanType.FLINSPACE:
-        scan_pts = get_scan_points_linspace(limits,num_pts)
-    elif stype == ScanType.FRANDOM:
-        scan_pts = get_scan_points_random(limits,num_pts)
-    elif stype == ScanType.SLINSPACE:
-        scan_pts = get_1d_scan_points_linspace(limits,num_pts)
-    elif stype == ScanType.SRANDOM:
-        scan_pts = get_1d_scan_points_random(limits,num_pts)
-    elif stype == ScanType.NONE:
-        scan_pts = []
+    scan_pts = ScanType.getPoints(limits,num_pts,stype)
 
     save_scan_points(scanfile,limits,scan_pts)
 
@@ -190,10 +158,16 @@ def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts,btype='lo
 
     # Replace SUBSETUP in the process card
     run_process(['sed','-i','-e',"s|SUBSETUP|%s|g" % (setup),"%s/%s" % (target_dir,proc_file)])
+    make_gridpack(setup,target_dir,btype)
 
-    # Run the gridpack generation step
+    return
+
+# Create a gridpack using a specific BatchType
+def make_gridpack(setup,target_dir,btype):
+    if not os.path.exists(target_dir):
+        print "[ERROR] Can't find target directory, %s" % (target_dir)
+        return
     print "\tGenerating gridpack..."
-
     if btype == BatchType.LOCAL:
         # For interactive/serial running
         run_process(['./gridpack_generation.sh',setup,target_dir])
@@ -218,8 +192,7 @@ def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts,btype='lo
     elif btype == BatchType.NONE:
         print "Skipping gridpack generation, %s" % (setup)
 
-    return 0
-
+# Unpack and run an existing gridpack to produce events
 def run_gridpack(setup,process,events,seed,cores):
     os.chdir(HOME_DIR)
 
@@ -267,153 +240,6 @@ def run_process(inputs):
         if l:
             print l.strip()
     return
-
-# Returns a list of linear spaced numbers (implementation of numpy.linspace)
-def linspace(start,stop,num,endpoint=True,acc=7):
-    if num < 0:
-        raise ValueError("Number of samples, %s, must be non-negative." % num)
-    acc = max(0,acc)
-    acc = min(15,acc)
-    div = (num - 1) if endpoint else num
-    delta = stop - start
-    if num > 1:
-        step = delta / div
-        y = [round((start + step*idx),acc) for idx in range(num)]
-    elif num == 1:
-        y = [start]
-    else:
-        y = []
-    if endpoint and num > 1:
-        y[-1] = stop
-    return y
-
-# This works for multi-dim scans now
-def get_scan_points_linspace(limits,num_pts):
-    if num_pts == 0:
-        return []
-    sm_pt = {}
-    for k in limits.keys():
-        sm_pt[k] = 0.0
-    start_pt = {}
-    for k,arr in limits.iteritems():
-        start_pt[k] = arr[0]
-    has_sm_pt = check_point(sm_pt,start_pt)
-    rwgt_pts  = []
-    coeffs    = []
-    arr       = []
-    for k,(start,low,high) in limits.iteritems():
-        coeffs.append(k)
-        arr += [linspace(low,high,num_pts)]
-    mesh_pts = [a for a in itertools.product(*arr)]
-    for rwgt_pt in mesh_pts:
-        pt = {}
-        for idx,k in enumerate(coeffs):
-            pt[k] = round(rwgt_pt[idx],6)
-        if check_point(pt,sm_pt):
-            # Skip SM point
-            has_sm_pt = True
-        if check_point(pt,start_pt):
-            # Skip starting point
-            continue
-        rwgt_pts.append(pt)
-    if not has_sm_pt:
-        rwgt_pts.append(sm_pt)
-    return rwgt_pts
-
-# Samples points randomly in the N-dimensional WC space
-def get_scan_points_random(limits,num_pts):
-    if num_pts == 0:
-        return []
-    sm_pt    = {}
-    start_pt = {}
-    for k,(start,low,high) in limits.iteritems():
-        sm_pt[k] = 0.0
-        start_pt[k] = start
-    has_sm_pt = check_point(sm_pt,start_pt)
-    rwgt_pts = []
-    for idx in range(num_pts):
-        pt = {}
-        for k,(start,low,high) in limits.iteritems():
-            pt[k] = round(random.uniform(low,high),6)
-        if check_point(pt,sm_pt):
-            has_sm_pt = True
-        if check_point(pt,start_pt):
-            continue
-        rwgt_pts.append(pt)
-    if not has_sm_pt:
-        rwgt_pts.append(sm_pt)
-    return rwgt_pts
-
-# Temporary hacked version to do multiple 1-d scans in a single re-weight
-def get_1d_scan_points_random(limits,num_pts):
-    if num_pts == 0:
-        return []
-    sm_pt    = {}
-    start_pt = {}
-    for k,(start,low,high) in limits.iteritems():
-        sm_pt[k] = 0.0
-        start_pt[k] = start
-    has_sm_pt = check_point(sm_pt,start_pt)
-    rwgt_pts = []
-    for k1,(start,low,high) in limits.iteritems():
-        for idx in range(num_pts):
-            pt = {}
-            val = random.uniform(low,high)
-            pt[k1] = round(val,6)
-            for k2 in limits.keys():
-                if k1 == k2:
-                    continue
-                else:
-                    pt[k1] = 0.0
-            if check_point(pt,sm_pt):
-                has_sm_pt = True
-            if check_point(pt,start_pt):
-                continue
-            rwgt_pts.append(pt)
-    if not has_sm_pt:
-        rwgt_pts.append(sm_pt)
-    return rwgt_pts
-
-# Temporary hacked version to do multiple 1-d scans in a single re-weight with linear spacing
-def get_1d_scan_points_linspace(limits,num_pts):
-    if num_pts == 0:
-        return []
-    sm_pt = {}
-    for k in limits.keys():
-        sm_pt[k] = 0.0
-    rwgt_pts  = []
-    start_pt  = {}
-    coeffs    = []
-    for k,arr in limits.iteritems():
-        start_pt[k] = arr[0]
-        coeffs.append(k)
-    has_sm_pt = check_point(sm_pt,start_pt)
-    for k1 in coeffs:
-        arr = linspace(limits[k1][1],limits[k1][2],num_pts)
-        for val in arr:
-            pt = {}
-            for k2 in coeffs:
-                if k1 == k2:
-                    pt[k2] = round(val,6)
-                else:
-                    pt[k2] = 0.0
-            if check_point(pt,sm_pt):
-                has_sm_pt = True
-            if check_point(pt,start_pt):
-                continue
-            rwgt_pts.append(pt)
-    if not has_sm_pt:
-        rwgt_pts.append(sm_pt)
-    return rwgt_pts
-
-# Checks if two W.C. phase space points are identical
-def check_point(pt1,pt2):
-    for k,v in pt1.iteritems():
-        if not pt2.has_key(k):
-            pt2[k] = 0.0    # pt2 is missing the coeff, add it and set it to SM value
-        if v != pt2[k]:
-            return False
-    return True
 
 # Sets the initial W.C. phase space point for MadGraph to start from
 def set_initial_point(file_name,limits):
@@ -479,6 +305,7 @@ def save_scan_points(fpath,limits,rwgt_pts):
             f.write(row)
     return
 
+# Reads a limit file and returns a dictionary mapping the WCs to their respective high,low limits to use
 def parse_limit_file(fpath):
     wc_limits = {}
     with open(fpath,'r') as f:
@@ -489,21 +316,22 @@ def parse_limit_file(fpath):
             wc_limits[arr[0]] = [float(arr[1]),float(arr[2])]
     return wc_limits
 
-def calculate_start_point(low,high):
+# Calculates a random point between two specified values
+def calculate_start_point(low,high,rfact=1.25):
+    #NOTE1: rfact determines how close to 0 the randomly sample WC stregnth can be
+    #NOTE2: rfact range can be [1,inf] and smaller numbers force the point to be further away from 0
     max_attempts = 999
     counter = 0
-    # Determines how close to 0 the randomly sampled WC strength can be
-    #NOTE: Range can be [1,inf] and smaller numbers force the point to be further away from 0
-    rand_factor = 1.25
+    #rand_factor = 1.25
     start_pt = round(random.uniform(low,high),6)
     while True:
         if counter > max_attempts:
             raise ValueError("Unable find valid starting point!")
         if start_pt < 0:
-            if abs(start_pt)*rand_factor > abs(low):
+            if abs(start_pt)*rfact > abs(low):
                 break
         else:
-            if abs(start_pt)*rand_factor > abs(high):
+            if abs(start_pt)*rfact > abs(high):
                 break
         start_pt = round(random.uniform(low,high),6)
         counter += 1
@@ -560,7 +388,7 @@ def submit_gridpack(ops):
         if start_pt.has_key(c):
             strength = start_pt[c]
         else:
-            strength = calculate_start_point(low,high)
+            strength = calculate_start_point(low,high,1.25)
         limits[c] = [strength,low,high]
         print "%s:" % (key.ljust(11)),limits[c]
     setup_gridpack(
@@ -597,8 +425,8 @@ def main():
     }
 
     options['batch_type'] = BatchType.NONE
-    options['scan_type']  = ScanType.FRANDOM
-    options['tag']        = '9DSetStart'
+    options['scan_type']  = ScanType.FLINSPACE #ScanType.FRANDOM
+    options['tag']        = 'ExampleTest' #'9DSetStart'
     options['rwgt_pts']   = 10
     options['coeffs']     = [
         'ctW','ctp','cpQM','ctZ','ctG','cbW','cpQ3','cptb','cpt',
@@ -610,7 +438,7 @@ def main():
     elif options['scan_type'] == ScanType.FRANDOM:
         options['tag'] = options['tag'] + "FullScan"
 
-    proc_list = ['ttH','ttll','ttlnu','tllq']
+    #proc_list = ['ttH','ttll','ttlnu','tllq']
     starting_points = [
         {
             'ctW':  -10.425061,
@@ -679,6 +507,12 @@ def main():
             'cpt':  136.026875,
         }
     ]
+
+    options['rwgt_pts'] = 3
+    options['coeffs'] = ['ctW','ctp','cpQM']
+    proc_list = ['ttH']
+    #starting_points = [{} for x in range(2)]
+    starting_points = [{}]
 
     delay = 0.5
     for p in proc_list:
