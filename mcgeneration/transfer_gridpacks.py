@@ -7,14 +7,20 @@ import subprocess
 
 # gfal-stat 'gsiftp://deepthought.crc.nd.edu/hadoop/store/user/awightma/gridpack_scans/ctG/ttH_ctG_run2_slc6_amd64_gcc630_CMSSW_9_3_0_tarball.tar.xz'
 # gfal-sum 'gsiftp://deepthought.crc.nd.edu/hadoop/store/user/awightma/gridpack_scans/ctG/ttH_ctG_run2_slc6_amd64_gcc630_CMSSW_9_3_0_tarball.tar.xz' MD5
+# scp awightma@lxplus.cern.ch:/afs/cern.ch/work/a/awightma/private/gridpack_production/genproductions/bin/MadGraph5_aMCatNLO awightma@earth.crc.nd.edu:/hadoop/store/user/awightma/gridpack_scans/2018_05_06/
+
 
 MAX_TRANSFERS = 999  # Limit the number of transfers per code running
 def main():
     good_fname = 'good_copies.log'
     bad_fname = 'failed_copies.log'
 
-    protocol = 'gsiftp://deepthought.crc.nd.edu'
-    outdir = '/hadoop/store/user/awightma/gridpack_scans/2018_05_06/'
+    #source_dir = "/afs/cern.ch/user/a/awightma/workspace/private/gridpack_production/genproductions/bin/MadGraph5_aMCatNLO"
+    #source_host = ""
+
+    protocol = 'gsiftp://'
+    tar_host = 'deepthought.crc.nd.edu'
+    tar_dir = '/hadoop/store/user/awightma/gridpack_scans/2018_05_06/'
     sub_dir = '/scanpoints/'
     failed_copies = []
     good_copies = []
@@ -31,9 +37,9 @@ def main():
         if idx > MAX_TRANSFERS:
             break
         bad_copy = False
-        remote_fn = protocol+outdir+fn
+        remote_fn = protocol+tar_host+tar_dir+fn
         if "_scanpoints.txt" in fn:
-            remote_fn = protocol+outdir+sub_dir+fn
+            remote_fn = protocol+tar_host+tar_dir+sub_dir+fn
 
         print "#"*100
         print "[%d/%d] Transfering File: %s" % (idx+1,len(transfer_files),fn)
@@ -81,14 +87,14 @@ def main():
             f.write('\n')
     return
 
-# Get a list of all files to transfer
+# Get a list of all (local) files to transfer
 def getFilesToTransfer(fdir='.',p_wl=[],c_wl=[],r_wl=[]):
     search_strs = ['_tarball.tar.xz','_scanpoints.txt']
     files = []
-    for idx,f in enumerate(os.listdir(fdir)):
-        if os.path.isdir(f):
-            continue
-        elif not isValidOr(f,search_strs):
+    arr = getLocalFiles(fdir)
+    #for idx,f in enumerate(os.listdir(fdir)):
+    for idx,f in enumerate(arr):
+        if not isValidOr(f,search_strs):
             # The file does not contain any of the search strings
             continue
         arr = f.split('_')
@@ -111,6 +117,24 @@ def getFilesToTransfer(fdir='.',p_wl=[],c_wl=[],r_wl=[]):
             # The file is missing a complement
             continue
         files.append(f)
+    return files
+
+# Get a list of local files in a directory
+def getLocalFiles(fdir='.'):
+    files = []
+    for idx,f in enumerate(os.listdir(fdir)):
+        if os.path.isdir(f):
+            continue
+        files.append(f)
+    return files
+
+# Get a list of files from a remote directory
+def getRemoteFiles(fdir):
+    # NOTE: Not currently finished!
+    files = []
+    arr = run_process(['gfal-ls',fdir],verbose=True)
+    print arr
+
     return files
 
 # fname must satisfy at least one of the search strings
