@@ -1,4 +1,5 @@
 import itertools
+import random
 
 # Returns a list of linear spaced numbers (implementation of numpy.linspace)
 def linspace(start,stop,num,endpoint=True,acc=7):

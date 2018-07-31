@@ -48,33 +48,55 @@ ANALYSIS_COEFFS = [ # As suggested by Adam
 #NOTE: The template directory should contain run_card.dat and customizecards.dat files
 PROCESS_MAP = {
     'ttH': {
+        'name': 'ttH',
         'process_card': 'ttH.dat',
         'template_dir': 'template_cards/test_template'
     },
     'ttW': {
+        'name': 'ttW',
         'process_card': 'ttW.dat',
         'template_dir': 'template_cards/test_template'
     },
     'ttZ': {
+        'name': 'ttZ',
         'process_card': 'ttZ.dat',
         'template_dir': 'template_cards/test_template'
     },
     'ttll': {
+        'name': 'ttll',
         'process_card': 'ttll.dat',
         'template_dir': 'template_cards/test_template'
     },
     'ttlnu': {
+        'name': 'ttlnu',
         'process_card': 'ttlnu.dat',
         'template_dir': 'template_cards/test_template'
     },
     'tllq': {
+        'name': 'tllq',
         'process_card': 'tllq.dat',
         'template_dir': 'template_cards/test_template'
     },
     'ttHJet': {
+        'name': 'ttH',
         'process_card': 'ttHJet.dat',
         'template_dir': 'template_cards/jets_template'
-    }
+    },
+    'ttllJet': {
+        'name': 'ttll',
+        'process_card': 'ttHJet.dat',
+        'template_dir': 'template_cards/jets_template'
+    },
+    'ttlnuJet': {
+        'name': 'ttlnu',
+        'process_card': 'ttHJet.dat',
+        'template_dir': 'template_cards/jets_template'
+    },
+    'tllqJet': {
+        'name': 'tllq',
+        'process_card': 'tllqJet.dat',
+        'template_dir': 'template_cards/jets_template'
+    },
 }
 
 # Setup/Create the needed folders and files for creating a gridpack
@@ -352,6 +374,7 @@ def submit_gridpack(ops):
         return
     proc_card    = PROCESS_MAP[proc_name]['process_card']
     template_dir = PROCESS_MAP[proc_name]['template_dir']
+    limits_name  = PROCESS_MAP[proc_name]['name']
 
     test_gridpack = False
     grid_events = 10000
@@ -377,7 +400,7 @@ def submit_gridpack(ops):
     print "N-Pts:",num_pts
     limits = {}
     for idx,c in enumerate(coeff_list):
-        key = "%s_%s" % (proc_name,c)
+        key = "%s_%s" % (limits_name,c)
         if wc_limits.has_key(key):
             low  = round(wc_limits[key][0],6)
             high = round(wc_limits[key][1],6)
@@ -425,12 +448,13 @@ def main():
     }
 
     options['batch_type'] = BatchType.NONE
-    options['scan_type']  = ScanType.FLINSPACE #ScanType.FRANDOM
-    options['tag']        = 'ExampleTest' #'9DSetStart'
+    #options['scan_type']  = ScanType.FLINSPACE
+    options['scan_type']  = ScanType.FRANDOM
+    options['tag']        = 'ExampleTest'
     options['rwgt_pts']   = 10
     options['coeffs']     = [
         'ctW','ctp','cpQM','ctZ','ctG','cbW','cpQ3','cptb','cpt',
-        #'cQl31','cQlM1','cQe1','ctl1','cte1','ctlS1','ctlT1',
+        'cQl31','cQlM1','cQe1','ctl1','cte1','ctlS1','ctlT1',
     ]
 
     if options['scan_type'] == ScanType.SLINSPACE:
@@ -438,7 +462,6 @@ def main():
     elif options['scan_type'] == ScanType.FRANDOM:
         options['tag'] = options['tag'] + "FullScan"
 
-    #proc_list = ['ttH','ttll','ttlnu','tllq']
     starting_points = [
         {
             'ctW':  -10.425061,
@@ -508,12 +531,12 @@ def main():
         }
     ]
 
-    options['rwgt_pts'] = 3
-    options['coeffs'] = ['ctW','ctp','cpQM']
-    proc_list = ['ttH']
+    #options['rwgt_pts'] = 3
+    #options['coeffs'] = ['ctW','ctp','cpQM']
     #starting_points = [{} for x in range(2)]
     starting_points = [{}]
 
+    proc_list = ['ttH']
     delay = 0.5
     for p in proc_list:
         options['process'] = p
