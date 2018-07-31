@@ -52,6 +52,16 @@ PROCESS_MAP = {
         'process_card': 'ttH.dat',
         'template_dir': 'template_cards/test_template'
     },
+    'ttHJet': {
+        'name': 'ttH',
+        'process_card': 'ttHJet.dat',
+        'template_dir': 'template_cards/jets_template'
+    },
+    'ttHDecay': {
+        'name': 'ttH',
+        'process_card': 'ttHDecay.dat',
+        'template_dir': 'template_cards/test_template'
+    },
     'ttW': {
         'name': 'ttW',
         'process_card': 'ttW.dat',
@@ -67,9 +77,29 @@ PROCESS_MAP = {
         'process_card': 'ttll.dat',
         'template_dir': 'template_cards/test_template'
     },
+    'ttllJet': {
+        'name': 'ttll',
+        'process_card': 'ttllJet.dat',
+        'template_dir': 'template_cards/jets_template'
+    },
+    'ttllDecay': {
+        'name': 'ttll',
+        'process_card': 'ttllDecay.dat',
+        'template_dir': 'template_cards/test_template'
+    },
     'ttlnu': {
         'name': 'ttlnu',
         'process_card': 'ttlnu.dat',
+        'template_dir': 'template_cards/test_template'
+    },
+    'ttlnuJet': {
+        'name': 'ttlnu',
+        'process_card': 'ttlnu.dat',
+        'template_dir': 'template_cards/jets_template'
+    },
+    'ttlnuDecay': {
+        'name': 'ttlnu',
+        'process_card': 'ttlnuDecay.dat',
         'template_dir': 'template_cards/test_template'
     },
     'tllq': {
@@ -77,25 +107,15 @@ PROCESS_MAP = {
         'process_card': 'tllq.dat',
         'template_dir': 'template_cards/test_template'
     },
-    'ttHJet': {
-        'name': 'ttH',
-        'process_card': 'ttHJet.dat',
-        'template_dir': 'template_cards/jets_template'
-    },
-    'ttllJet': {
-        'name': 'ttll',
-        'process_card': 'ttHJet.dat',
-        'template_dir': 'template_cards/jets_template'
-    },
-    'ttlnuJet': {
-        'name': 'ttlnu',
-        'process_card': 'ttHJet.dat',
-        'template_dir': 'template_cards/jets_template'
-    },
     'tllqJet': {
         'name': 'tllq',
         'process_card': 'tllqJet.dat',
         'template_dir': 'template_cards/jets_template'
+    },
+    'tllqDecay': {
+        'name': 'tllq',
+        'process_card': 'tllqDecay.dat',
+        'template_dir': 'template_cards/test_template'
     },
 }
 

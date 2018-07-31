@@ -31,10 +31,10 @@ set max_npoint_for_channel 0
 import model dim6top_LO_UFO
 define p = p b b~
 define j = p
-define l+ = e+ mu+ ta+
-define l- = e- mu- ta-
+define l+ = e+ mu+
+define l- = e- mu-
 define vl = ve vm vt
 define vl~ = ve~ vm~ vt~
-generate p p > t t~ l+ vl DIM6=1
-add process p p > t t~ l- vl~ DIM6=1
+define w = w+ w-
+generate p p > t t~ h, t > w+ j, t~ > w- j DIM6=1
 output SUBSETUP -nojpeg
