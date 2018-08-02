@@ -27,7 +27,8 @@ GRIDRUN_DIR  = 'gridruns'
 
 SAVE_DIAGRAMS = False   # Note: Need to modify generate_gridpack.sh if set to true (otherwise they get cleaned up)
 USE_COUPLING_MODEL = False
-COUPLING_STRING = "DIM6^2==1 DIM6_ctW^2==1"
+#COUPLING_STRING = "DIM6^2==1 DIM6_ctW^2==1"
+COUPLING_STRING = "DIM6=0"
 
 ALL_COEFFS = [
     'ctp','ctpI','cpQM','cpQ3','cpt','cpb','cptb','cptbI','ctW','ctZ','ctWI','ctZI','cbW','cbWI',
@@ -195,7 +196,7 @@ def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts,btype='lo
     if USE_COUPLING_MODEL:
         print "\tUsing each_coupling_order model!"
         # Replace the default dim6 model with the 'coupling_orders' version
-        run_process(['sed','-i','-e',"s|dim6top_LO_UFO|dim6top_LO_UFO_each_coupling_order|g","%s/%s" % (target_dir,proc_file)])
+        #run_process(['sed','-i','-e',"s|dim6top_LO_UFO|dim6top_LO_UFO_each_coupling_order|g","%s/%s" % (target_dir,proc_file)])
         run_process(['sed','-i','-e',"s|DIM6=1|%s|g" % (COUPLING_STRING),"%s/%s" % (target_dir,proc_file)])
 
     # Replace SUBSETUP in the process card
@@ -412,11 +413,16 @@ def submit_gridpack(ops):
         test_gridpack = False
 
     N = len(coeff_list)
-    if scan_type == ScanType.FRANDOM:
-        num_pts = max(num_pts,1.2*(1+2*N+N*(N-1)/2))
-    elif scan_type == ScanType.SLINSPACE:
-        num_pts = max(num_pts,3)
-    num_pts = int(num_pts)
+    if num_pts > 0:
+        # Make sure we have enough points to reconstruct the parametrization
+        if scan_type == ScanType.FRANDOM:
+            num_pts = max(num_pts,1.2*(1+2*N+N*(N-1)/2))
+        elif scan_type == ScanType.SLINSPACE:
+            num_pts = max(num_pts,3)
+        num_pts = int(num_pts)
+    else:
+        # We don't want to do any reweighting
+        num_pts = 0
     print "N-Pts:",num_pts
     limits = {}
     for idx,c in enumerate(coeff_list):
@@ -481,82 +487,16 @@ def main():
         options['tag'] = options['tag'] + "AxisScan"
     elif options['scan_type'] == ScanType.FRANDOM:
         options['tag'] = options['tag'] + "FullScan"
-
-    starting_points = [
-        {
-            'ctW':  -10.425061,
-            'ctp':  51.017823,
-            'cpQM': -127.460382,
-            'ctZ':  -12.37404,
-            'ctG':  3.088479,
-            'cbW':  48.942369,
-            'cpQ3': -42.329907,
-            'cptb': -105.381412,
-            'cpt':  -145.130401,
-        },
-        {
-            'ctW':  9.230491,
-            'ctp':  -18.412743,
-            'cpQM': 127.523771,
-            'ctZ':  -12.700832,
-            'ctG':  3.088479,
-            'cbW':  48.942369,
-            'cpQ3': -42.329907,
-            'cptb': -105.381412,
-            'cpt':  -145.130401,
-        },
-        {
-            'ctW':  -10.425061,
-            'ctp':  51.017823,
-            'cpQM': -127.460382,
-            'ctZ':  -12.37404,
-            'ctG':  -2.894448,
-            'cbW':  44.600086,
-            'cpQ3': -43.06341,
-            'cptb': -92.81369,
-            'cpt':  -149.972186,
-        },
-        {
-            'ctW':  9.230491,
-            'ctp':  -18.412743,
-            'cpQM': 127.523771,
-            'ctZ':  -12.700832,
-            'ctG':  -2.894448,
-            'cbW':  44.600086,
-            'cpQ3': -43.06341,
-            'cptb': -92.81369,
-            'cpt':  -149.972186,
-        },
-        {
-            'ctW':  -10.425061,
-            'ctp':  51.017823,
-            'cpQM': -127.460382,
-            'ctZ':  -12.37404,
-            'ctG':  -2.882015,
-            'cbW':  -47.663293,
-            'cpQ3': -40.25991,
-            'cptb': -93.482367,
-            'cpt':  136.026875,
-        },
-        {
-            'ctW':  9.230491,
-            'ctp':  -18.412743,
-            'cpQM': 127.523771,
-            'ctZ':  -12.700832,
-            'ctG':  -2.882015,
-            'cbW':  -47.663293,
-            'cpQ3': -40.25991,
-            'cptb': -93.482367,
-            'cpt':  136.026875,
-        }
-    ]
-
-    #options['rwgt_pts'] = 3
-    #options['coeffs'] = ['ctW','ctp','cpQM']
-    #starting_points = [{} for x in range(2)]
+    
     starting_points = [{}]
 
-    proc_list = ['ttH']
+    options['rwgt_pts'] = 0
+    options['tag'] = 'Dim6'
+    options['coeffs'] = ['ctW','ctp']
+    for c in options['coeffs']:
+        starting_points[0][c] = 0.0
+
+    proc_list = ['ttHDecay','ttllDecay','ttlnuDecay']
     delay = 0.5
     for p in proc_list:
         options['process'] = p
