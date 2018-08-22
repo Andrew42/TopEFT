@@ -23,7 +23,7 @@ else
     git clone -b mg26x https://github.com/cms-sw/genproductions.git genproductions 
     cd ${GENPRODPATH}
     # copy relevant code  
-    for FILE in addons patches Utilities runcmsgrid_LO.sh gridpack_generation.sh submit_madpack_ttbareft.sh configure_gridpack.py transfer_gridpacks.py transfer_diagrams.py helper_tools.py submit_cmsconnect_gridpack_generation.sh ; do 
+    for FILE in addons patches Utilities runcmsgrid_LO.sh gridpack_generation.sh submit_madpack_ttbareft.sh configure_gridpack.py transfer_gridpacks.py transfer_diagrams.py helper_tools.py ScanType.py BatchType.py submit_cmsconnect_gridpack_generation.sh ; do 
 	cp -r ${EFTMCPATH}/${FILE} ${GENPRODPATH}/bin/MadGraph5_aMCatNLO/.
     done
     cd ${GENPRODPATH}/.

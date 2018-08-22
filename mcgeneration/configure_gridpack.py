@@ -7,6 +7,9 @@ import time
 #import numpy as np
 
 from helper_tools import *
+from ScanType import *
+from BatchType import *
+from DegreeOfFreedom import *
 
 # On lxplus using numpy requires: scl enable python27 bash
 
@@ -121,7 +124,7 @@ PROCESS_MAP = {
 }
 
 # Setup/Create the needed folders and files for creating a gridpack
-def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts,btype='local',stype='full_linspace'):
+def setup_gridpack(template_dir,setup,process,proc_card,dofs,num_pts,btype='local',stype='full_linspace'):
     if not BatchType.isValid(btype):
         raise ValueError("%s is not a valid batch type!" % (btype))
     elif not ScanType.isValid(stype):
@@ -151,9 +154,9 @@ def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts,btype='lo
     proc_file    = "%s_%s" % (setup,MG_PROC_CARD)
 
     # Coefficient scan points
-    scan_pts = ScanType.getPoints(limits,num_pts,stype)
+    scan_pts = ScanType.getPoints(dofs,num_pts,stype)
 
-    save_scan_points(scanfile,limits,scan_pts)
+    save_scan_points(scanfile,dofs,scan_pts)
 
     target_dir = os.path.join(process_subdir,setup)
     if not os.path.exists(target_dir):
@@ -178,10 +181,11 @@ def setup_gridpack(template_dir,setup,process,proc_card,limits,num_pts,btype='lo
     # Create/Modify cards for gridpack generation
     set_initial_point(
         os.path.join(target_dir,custom_file),
-        limits
+        dofs
     )
     make_reweight_card(
         os.path.join(target_dir,rwgt_file),
+        dofs,
         scan_pts
     )
 
@@ -271,124 +275,20 @@ def run_gridpack(setup,process,events,seed,cores):
 
     return
 
-####################################################################################################
-
-# Pipes subprocess messages to STDOUT
-def run_process(inputs):
-    p = subprocess.Popen(inputs,stdout=subprocess.PIPE)
-    while True:
-        l = p.stdout.readline()
-        if l == '' and p.poll() is not None:
-            break
-        if l:
-            print l.strip()
-    return
-
-# Sets the initial W.C. phase space point for MadGraph to start from
-def set_initial_point(file_name,limits):
-    with open(file_name,'a') as f:
-        f.write('set param_card MB 0.0 \n')
-        f.write('set param_card ymb 0.0 \n')
-        for k,arr in limits.iteritems():
-            f.write('set param_card %s %.6f \n' % (k,arr[0]))
-        f.write('\n')
-    return file_name
-
-# Create the MadGraph reweight card with scans over the specified W.C. phase space points
-def make_reweight_card(file_name,pts):
-    # pts = [{c1: 1.0, c2: 1.0, ...}, {c1: 1.0, c2: 2.0, ...}, ...]
-    header  = ""
-    header += "#******************************************************************\n"
-    header += "#                       Reweight Module                           *\n"
-    header += "#******************************************************************\n"
-    header += "\nchange rwgt_dir rwgt\n"
-
-    if len(pts) == 0:
-        return file_name
-
-    with open(file_name,'w') as f:
-        f.write(header)
-        for idx,p in enumerate(pts):
-            if idx == 0:
-                # This is a workaround for the MG bug causing first point to not be renamed
-                f.write('\nlaunch --rwgt_name=dummy_point')
-                f.write('\nset %s 0.0123' % (p.keys()[0]))
-                f.write('\n')
-            rwgt_str = 'EFTrwgt%d' % (idx)
-            for k,v in p.iteritems():
-                rwgt_str += '_' + k + '_' + str(round(v,6))
-            f.write('\nlaunch --rwgt_name=%s' % (rwgt_str))
-            for k,v in p.iteritems():
-                f.write('\nset %s %.6f' % (k,v))
-            f.write('\n')
-    return file_name
-
-# Saves the scan points to a text file formatted into a nice table
-def save_scan_points(fpath,limits,rwgt_pts):
-    col_spacing = 15
-    col_sep = " "
-    coeffs = limits.keys()
-    with open(fpath,'w') as f:
-        header = "".ljust(col_spacing)
-        for c in coeffs:
-            header += c.ljust(col_spacing) + col_sep
-        start_row = "\nMGStart".ljust(col_spacing) + col_sep
-        for c in coeffs:
-            start_row += str(limits[c][0]).ljust(col_spacing) + col_sep
-        f.write(header)
-        f.write(start_row)
-        for idx,pt in enumerate(rwgt_pts):
-            row_name = "rwgt%d" % (idx)
-            row = "\n" + row_name.ljust(col_spacing) + col_sep
-            for c in coeffs:
-                if not pt.has_key(c):
-                    row += "0.0".ljust(col_spacing) + col_sep
-                else:
-                    row += str(pt[c]).ljust(col_spacing) + col_sep
-            f.write(row)
-    return
-
-# Reads a limit file and returns a dictionary mapping the WCs to their respective high,low limits to use
-def parse_limit_file(fpath):
-    wc_limits = {}
-    with open(fpath,'r') as f:
-        for l in f:
-            arr = l.split()
-            if len(arr) != 3:
-                continue
-            wc_limits[arr[0]] = [float(arr[1]),float(arr[2])]
-    return wc_limits
-
-# Calculates a random point between two specified values
-def calculate_start_point(low,high,rfact=1.25):
-    #NOTE1: rfact determines how close to 0 the randomly sample WC stregnth can be
-    #NOTE2: rfact range can be [1,inf] and smaller numbers force the point to be further away from 0
-    max_attempts = 999
-    counter = 0
-    #rand_factor = 1.25
-    start_pt = round(random.uniform(low,high),6)
-    while True:
-        if counter > max_attempts:
-            raise ValueError("Unable find valid starting point!")
-        if start_pt < 0:
-            if abs(start_pt)*rfact > abs(low):
-                break
-        else:
-            if abs(start_pt)*rfact > abs(high):
-                break
-        start_pt = round(random.uniform(low,high),6)
-        counter += 1
-    return start_pt
-
+# Parses options to produce a gridpack in a particular way
 def submit_gridpack(ops):
     batch_type = ops['batch_type']
     scan_type  = ops['scan_type']
     proc_name  = ops['process']
     grp_tag    = ops['tag']
     run_num    = ops['run']
-    coeff_list = ops['coeffs']
+    #dofs       = ops['coeffs']
     start_pt   = ops['start_pt']
     num_pts    = ops['rwgt_pts']
+
+    dofs = {}   # Convert list to dictionary
+    for dof in ops['coeffs']:
+        dofs[dof.getName()] = dof
 
     if not PROCESS_MAP.has_key(proc_name):
         print "Unknown process: %s" % (proc_name)
@@ -412,7 +312,7 @@ def submit_gridpack(ops):
         # Don't let us try to run gridpacks when doing batch production!
         test_gridpack = False
 
-    N = len(coeff_list)
+    N = len(dofs.keys())
     if num_pts > 0:
         # Make sure we have enough points to reconstruct the parametrization
         if scan_type == ScanType.FRANDOM:
@@ -424,8 +324,7 @@ def submit_gridpack(ops):
         # We don't want to do any reweighting
         num_pts = 0
     print "N-Pts:",num_pts
-    limits = {}
-    for idx,c in enumerate(coeff_list):
+    for idx,c in enumerate(dofs.keys()):
         key = "%s_%s" % (limits_name,c)
         if wc_limits.has_key(key):
             low  = round(wc_limits[key][0],6)
@@ -438,14 +337,18 @@ def submit_gridpack(ops):
             strength = start_pt[c]
         else:
             strength = calculate_start_point(low,high,1.25)
-        limits[c] = [strength,low,high]
-        print "%s:" % (key.ljust(11)),limits[c]
+        dofs[c].setLimits(strength,low,high)
+
+    for idx,c in enumerate(dofs.keys()):
+        key = "%s_%s" % (limits_name,c)
+        print "%s:" % (key.ljust(11)),dofs[c].limits
+
     setup_gridpack(
         template_dir=template_dir,
         setup=setup_name,
         process=proc_name,
         proc_card=proc_card,
-        limits=limits,
+        dofs=dofs,
         num_pts=num_pts,
         btype=batch_type,
         stype=scan_type
@@ -473,30 +376,47 @@ def main():
         'rwgt_pts': 10,
     }
 
+    ctp   = DegreeOfFreedom(name='ctp'  ,relations=[['ctp'] ,1.0])
+    cpQM  = DegreeOfFreedom(name='cpQM' ,relations=[['cpQM'],1.0])
+    cpQ3  = DegreeOfFreedom(name='cpQ3' ,relations=[['cpQ3'],1.0])
+    cpt   = DegreeOfFreedom(name='cpt'  ,relations=[['cpt'] ,1.0])
+    cptb  = DegreeOfFreedom(name='cptb' ,relations=[['cptb'],1.0])
+    ctW   = DegreeOfFreedom(name='ctW'  ,relations=[['ctW'] ,1.0])
+    ctZ   = DegreeOfFreedom(name='ctZ'  ,relations=[['ctZ'] ,1.0])
+    cbW   = DegreeOfFreedom(name='cbW'  ,relations=[['cbW'] ,1.0])
+    ctG   = DegreeOfFreedom(name='ctG'  ,relations=[['ctG'] ,1.0])
+    cQQ1  = DegreeOfFreedom(name='cQQ1' ,relations=[['cQQ1'],1.0])
+    cQQ8  = DegreeOfFreedom(name='cQQ8' ,relations=[['cQQ8'],1.0])
+    cQt1  = DegreeOfFreedom(name='cQt1' ,relations=[['cQt1'],1.0])
+    cQt8  = DegreeOfFreedom(name='cQt8' ,relations=[['cQt8'],1.0])
+    ctt1  = DegreeOfFreedom(name='ctt1' ,relations=[['ctt1'],1.0])
+    cQei  = DegreeOfFreedom(name='cQei' ,relations=[['cQe1','cQe2','cQe3'],1.0])
+    ctli  = DegreeOfFreedom(name='ctli' ,relations=[['ctl1','ctl2','ctl3'],1.0])
+    ctei  = DegreeOfFreedom(name='ctei' ,relations=[['cte1','cte2','cte3'],1.0])
+    cQl3i = DegreeOfFreedom(name='cQl3i',relations=[['cQl31','cQl32','cQl33'],1.0])
+    cQlMi = DegreeOfFreedom(name='cQlMi',relations=[['cQlM1','cQlM2','cQlM3'],1.0])
+    ctlSi = DegreeOfFreedom(name='ctlSi',relations=[['ctlS1','ctlS2','ctlS3'],1.0])
+    ctlTi = DegreeOfFreedom(name='ctlTi',relations=[['ctlT1','ctlT2','ctlT3'],1.0])
+
     options['batch_type'] = BatchType.NONE
-    #options['scan_type']  = ScanType.FLINSPACE
     options['scan_type']  = ScanType.FRANDOM
     options['tag']        = 'ExampleTest'
     options['rwgt_pts']   = 10
     options['coeffs']     = [
-        'ctW','ctp','cpQM','ctZ','ctG','cbW','cpQ3','cptb','cpt',
-        'cQl31','cQlM1','cQe1','ctl1','cte1','ctlS1','ctlT1',
+        ctW,ctp,cpQM,ctZ,ctG,cbW,cpQ3,cptb,cpt,
+        cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi
     ]
 
     if options['scan_type'] == ScanType.SLINSPACE:
         options['tag'] = options['tag'] + "AxisScan"
     elif options['scan_type'] == ScanType.FRANDOM:
         options['tag'] = options['tag'] + "FullScan"
-    
+
     starting_points = [{}]
+    for dof in options['coeffs']:
+        starting_points[0][dof.getName()] = 4.0
 
-    options['rwgt_pts'] = 0
-    options['tag'] = 'Dim6'
-    options['coeffs'] = ['ctW','ctp']
-    for c in options['coeffs']:
-        starting_points[0][c] = 0.0
-
-    proc_list = ['ttHDecay','ttllDecay','ttlnuDecay']
+    proc_list = ['ttH']
     delay = 0.5
     for p in proc_list:
         options['process'] = p

@@ -4,7 +4,7 @@ import shutil
 OUTPUT_DIRECTORY = "/afs/cern.ch/user/a/awightma/www/eft_analysis/diagrams"
 SUBPROCESS_DIRECTORY = "work/processtmp/SubProcesses"
 
-def getProcessDirectories(path='.'):
+def getProcessDirectories(path='.',p_wl=[],c_wl=[],r_wl=[]):
     dir_paths = []
     if not os.path.exists(path):
         print "[ERROR] Path does not exists: %s" % (path)
@@ -18,6 +18,12 @@ def getProcessDirectories(path='.'):
             continue
         p,c,r = arr
         if not "run" in r:
+            continue
+        elif len(p_wl) > 0 and not p in p_wl:
+            continue
+        elif len(c_wl) > 0 and not c in c_wl:
+            continue
+        elif len(r_wl) > 0 and not r in r_wl:
             continue
         dir_paths.append(tmp_path)
     return dir_paths
