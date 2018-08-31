@@ -23,7 +23,7 @@ def linspace(start,stop,num,endpoint=True,acc=7):
     div = (num - 1) if endpoint else num
     delta = stop - start
     if num > 1:
-        step = delta / div
+        step = float(delta) / div
         y = [round((start + step*idx),acc) for idx in range(num)]
     elif num == 1:
         y = [start]

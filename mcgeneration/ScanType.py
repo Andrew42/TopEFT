@@ -2,9 +2,9 @@ from helper_tools import *
 
 class ScanType(object):
     FRANDOM   = 'full_random'
-    SRANDOM   = '1d_random'
+    SRANDOM   = 'axis_random'
     FLINSPACE = 'full_linspace'
-    SLINSPACE = '1d_linspace'
+    SLINSPACE = 'axis_linspace'
     NONE      = 'none'
 
     @classmethod
@@ -13,7 +13,9 @@ class ScanType(object):
 
     @classmethod
     def isValid(cls,stype):
-        return stype in cls.getTypes()
+        if not stype in cls.getTypes():
+            raise ValueError("%s is not a valid scan type!" % (stype))
+        return stype in cls.getTypes() #TODO: Won't be needed once Gridpack class is implemented
 
     @classmethod
     def getPoints(cls,dofs,num_pts,stype):

@@ -11,4 +11,6 @@ class BatchType(object):
 
     @classmethod
     def isValid(cls,btype):
-        return btype in cls.getTypes()
+        if not btype in cls.getTypes():
+            raise ValueError("%s is not a valid batch type!" % (btype))
+        return btype in cls.getTypes()  #TODO: Won't be needed once Gridpack class is implemented

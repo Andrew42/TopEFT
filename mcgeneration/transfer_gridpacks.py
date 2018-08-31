@@ -3,6 +3,7 @@ import subprocess
 
 #NOTE: This is meant to transfer two files in the format: p_c_r_scanpoints.txt and p_c_r_*_tarball.tar.xz
 
+# voms-proxy-init -voms cms -valid 192:00
 # /tmp/x509up_u92084
 
 # gfal-stat 'gsiftp://deepthought.crc.nd.edu/hadoop/store/user/awightma/gridpack_scans/ctG/ttH_ctG_run2_slc6_amd64_gcc630_CMSSW_9_3_0_tarball.tar.xz'
@@ -20,7 +21,7 @@ def main():
 
     protocol = 'gsiftp://'
     tar_host = 'deepthought.crc.nd.edu'
-    tar_dir = '/hadoop/store/user/awightma/gridpack_scans/2018_05_06/'
+    tar_dir = '/store/user/awightma/gridpack_scans/2018_08_24/'
     sub_dir = '/scanpoints/'
     failed_copies = []
     good_copies = []

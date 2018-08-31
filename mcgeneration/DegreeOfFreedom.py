@@ -2,7 +2,7 @@ class DegreeOfFreedom(object):
     def __init__(self,name,relations=[]):
         self.name = name
         self.relations = {}
-        self.limits = [0,-10.0,10.0]
+        self.limits = [0,None,None]
 
         if len(relations) == 2:
             self.setCoefficient(relations[0],relations[1])
@@ -28,6 +28,9 @@ class DegreeOfFreedom(object):
 
     def setLimits(self,start,low,high):
         self.limits = [start,low,high]
+
+    def hasLimits(self):
+        return not (self.getLow() is None or self.getHigh() is None)
 
     def popCoefficient(self,wc_name):
         return self.relations.pop(wc_name,None)
