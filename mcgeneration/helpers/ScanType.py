@@ -1,4 +1,4 @@
-from helper_tools import *
+from helper_tools import linspace, check_point
 
 class ScanType(object):
     FRANDOM   = 'full_random'

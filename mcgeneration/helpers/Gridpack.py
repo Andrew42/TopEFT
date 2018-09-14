@@ -1,11 +1,11 @@
 import os
 import subprocess
 import shutil
+import random
 
-from BatchType import *
-from ScanType import *
-from DegreeOfFreedom import *
-#from JobTracker import *
+from BatchType import BatchType
+from ScanType import ScanType
+from DegreeOfFreedom import DegreeOfFreedom
 from helper_tools import *
 
 # Class for configuring and setting up the submission for a single gridpack, can also run a produced gridpack tarball
@@ -36,6 +36,9 @@ class Gridpack(object):
         # Used when naming the final gridpack tarball
         self.CURR_ARCH        = 'slc6_amd64_gcc630'
         self.CURR_RELEASE     = 'CMSSW_9_3_0'
+
+        # The script that is used to actually run the gridpack production
+        self.GENPROD_SCRIPT   = 'gridpack_generation.sh'
 
         self.SAVE_DIAGRAMS      = False  # Need to modify generate_gridpack.sh if set to true (else gets cleaned up)
         self.USE_COUPLING_MODEL = False  # Replace the default dim6 model with the 'coupling_orders' version
@@ -262,6 +265,11 @@ class Gridpack(object):
             return False
 
         print "Setup gridpack: %s..." % (self.getSetupString())
+
+        # Set the random seed adding extra events to the pilotrun
+        seed = int(random.uniform(1,1e6))
+        print "\tSeed: %d" % (seed)
+        run_process(['sed','-i','-e',"s|RWSEED=[0-9]*|RWSEED=%d|g" % (seed),self.GENPROD_SCRIPT])
 
         target_dir = self.getTargetDirectory(create=False)
         if os.path.exists(target_dir):

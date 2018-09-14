@@ -1,7 +1,7 @@
 import os
 import datetime
 import math
-from helper_tools import *
+from helper_tools import run_process
 
 # Utility class for keeping track of gridpack production jobs
 class JobTracker(object):

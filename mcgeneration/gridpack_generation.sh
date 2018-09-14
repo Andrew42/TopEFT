@@ -501,6 +501,14 @@ make_gridpack () {
       cat makegrid.dat | ./bin/generate_events pilotrun
       echo "finished pilot run"
    
+      pwd
+
+      #RWSEED=657343
+      #RWNEVT=1000
+      #./run.sh $RWNEVT $RWSEED
+      #mv $WORKDIR/process/madevent/Events/GridRun_${RWSEED}/"events.lhe.gz" $WORKDIR/"unweighted_events.lhe.gz"
+      #ls -ltr $WORKDIR
+
       #awightma
       #exit 1
  

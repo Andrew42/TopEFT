@@ -9,9 +9,15 @@ from helper_tools import *
 from ScanType import *
 from BatchType import *
 from DegreeOfFreedom import *
-
 from JobTracker import *
 from Gridpack import *
+
+#from helpers.helper_tools import linspace
+#from helpers.ScanType import ScanType
+#from helpers.BatchType import BatchType
+#from helpers.DegreeOfFreedom import DegreeOfFreedom
+#from helpers.JobTracker import JobTracker
+#from helpers.Gridpack import Gridpack
 
 #NOTE: The template directory should contain run_card.dat and customizecards.dat files
 PROCESS_MAP = {
@@ -113,7 +119,8 @@ ctlTi = DegreeOfFreedom(name='ctlTi',relations=[['ctlT1','ctlT2','ctlT3'],1.0])
 def cmsconnect_chain_submit(dofs,proc_list):
     tracker = JobTracker(fdir=".")
 
-    tag_postfix = '16DRandomStartTopDecayDefaultPDF'
+    #tag_postfix = '16DRandomStartTopDecayDefaultPDF'
+    tag_postfix = 'RefCheck'
     max_gen = 5
     max_int = 5
     max_run = 50
@@ -144,30 +151,30 @@ def cmsconnect_chain_submit(dofs,proc_list):
                 limits_name=PROCESS_MAP[p]['name'],
                 proc_card=PROCESS_MAP[p]['process_card'],
                 template_dir=PROCESS_MAP[p]['template_dir'],
-                stype=ScanType.FRANDOM,#ScanType.SLINSPACE,
+                stype=ScanType.SLINSPACE,
                 btype=BatchType.CMSCONNECT
             )
-            #submitted += submit_1dim_jobs(
-            #    gp=gridpack,
-            #    dofs=dofs,
-            #    npts=10,
-            #    tag_postfix=tag_postfix,
-            #    max_submits=max_submits
-            #)
-            start_pts = []
-            pt = {}
-            #for dof in dofs:
-            #    pt[dof.getName()] = 4.0 # Robert starting value
-            start_pts.append(pt)
-            submitted += submit_ndim_jobs(
+            submitted += submit_1dim_jobs(
                 gp=gridpack,
                 dofs=dofs,
                 npts=10,
-                runs=4,
-                tag=tag_postfix,
-                start_pts=start_pts,
+                tag_postfix=tag_postfix,
                 max_submits=max_submits
             )
+            #start_pts = []
+            #pt = {}
+            ##for dof in dofs:
+            ##    pt[dof.getName()] = 4.0 # Robert starting value
+            #start_pts.append(pt)
+            #submitted += submit_ndim_jobs(
+            #    gp=gridpack,
+            #    dofs=dofs,
+            #    npts=10,
+            #    runs=4,
+            #    tag=tag_postfix,
+            #    start_pts=start_pts,
+            #    max_submits=max_submits
+            #)
             if submitted >= max_submits:
                 break
         print ""
@@ -181,8 +188,8 @@ def cmsconnect_chain_submit(dofs,proc_list):
 def submit_1dim_jobs(gp,dofs,npts,tag_postfix='',max_submits=-1):
     submitted = 0
     delay    =  10.0   # Time between successful submits (in seconds)
-    low_lim  = -50.0
-    high_lim =  50.0
+    low_lim  = -5.0#-50.0
+    high_lim =  5.0# 50.0
     runs = 5
     for dof in dofs:
         dof_subset = [dof]
@@ -247,13 +254,14 @@ def submit_ndim_jobs(gp,dofs,npts,runs,tag,start_pts=[],max_submits=-1):
 def main():
     random.seed()
     stype = ScanType.SLINSPACE
-    btype = BatchType.NONE
-    tag   = 'ExampleTag'
+    btype = BatchType.CMSCONNECT
+    tag   = 'Range5to5'
     rwgt_pts  = 10
-    proc_list = ['tllqDecay']
+    proc_list = ['ttllDecay']
     dof_list  = [
-        ctW,ctp,cpQM,ctZ,ctG,cbW,cpQ3,cptb,cpt,
-        cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi
+        #ctW,ctp,cpQM,ctZ,ctG,cbW,cpQ3,cptb,cpt,
+        #cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi
+        cbW
     ]
 
     if stype == ScanType.SLINSPACE:
@@ -261,10 +269,12 @@ def main():
     elif stype == ScanType.FRANDOM:
         tag = tag + "FullScan"
 
-    if btype == BatchType.CMSCONNECT:
+    if btype == BatchType.CMSCONNECT and False:
         # For submitting on CMSCONNECT, uses a way to track job progress
-        dof_list  = [cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi,ctW,ctp,cpQM,ctZ,ctG,cbW,cpQ3,cptb,cpt]
-        proc_list = ['ttHDecay','ttllDecay','ttlnuDecay','tllqDecay']
+        #dof_list  = [cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi,ctW,ctp,cpQM,ctZ,ctG,cbW,cpQ3,cptb,cpt]
+        #proc_list = ['ttHDecay','ttllDecay','ttlnuDecay','tllqDecay']
+        dof_list  = [ctp,ctli,ctlSi,cQei]
+        proc_list = ['tllqDecay']
         cmsconnect_chain_submit(dof_list,proc_list)
         return
 
