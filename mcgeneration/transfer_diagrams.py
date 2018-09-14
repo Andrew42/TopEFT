@@ -1,9 +1,13 @@
 import os
 import shutil
 
+# This script is used to move the feynman diagrams produced by running MadGraph to some desired location for easier browsing/viewing
+# NOTE: The MadGraph runs need to follow the p_c_r_* style naming convention for proper identification!
+
 OUTPUT_DIRECTORY = "/afs/cern.ch/user/a/awightma/www/eft_analysis/diagrams"
 SUBPROCESS_DIRECTORY = "work/processtmp/SubProcesses"
 
+# Search the specified locations for directories corresponding to MadGraph runs
 def getProcessDirectories(path='.',p_wl=[],c_wl=[],r_wl=[]):
     dir_paths = []
     if not os.path.exists(path):
@@ -28,6 +32,7 @@ def getProcessDirectories(path='.',p_wl=[],c_wl=[],r_wl=[]):
         dir_paths.append(tmp_path)
     return dir_paths
 
+# Determine all the SubProcess directories in the MadGraph work area
 def getSubProcessDirectories(path):
     dir_paths = []
     if not os.path.exists(path):
@@ -45,6 +50,7 @@ def getSubProcessDirectories(path):
         dir_paths.append(tmp_path)
     return dir_paths
 
+# Get all files from a particular directory (optionally specify an extension to filter on)
 def getFiles(path,ext=None):
     files = []
     for idx,f in enumerate(os.listdir(path)):
@@ -56,6 +62,7 @@ def getFiles(path,ext=None):
         files.append(tmp_path)
     return files
 
+# create an output directory at the specified location, with the needed sub-directories
 def makeOutputDirectory(path,out_path):
     target_dir = None
     h,t = os.path.split(path)
@@ -77,6 +84,7 @@ def makeOutputDirectory(path,out_path):
         os.mkdir(target_dir)
     return target_dir
 
+# Move the .ps files from one directory to another (matching) directory
 def transferFiles(source_dirs,target_dirs):
     copied_files = []
     for sd in source_dirs:
@@ -105,6 +113,7 @@ def transferFiles(source_dirs,target_dirs):
             copied_files.append([fsource,ftarget])
     return copied_files
 
+# Transfers the Feynman diagrams from a particular MadGraph run to some output directory location
 def transferDiagrams(path):
     source = os.path.split(path)[1]
     print "[INFO] Transfering Feynman diagrams: %s" % (source)

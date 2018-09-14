@@ -5,19 +5,12 @@ import itertools
 import random
 import time
 
-from helper_tools import *
-from ScanType import *
-from BatchType import *
-from DegreeOfFreedom import *
-from JobTracker import *
-from Gridpack import *
-
-#from helpers.helper_tools import linspace
-#from helpers.ScanType import ScanType
-#from helpers.BatchType import BatchType
-#from helpers.DegreeOfFreedom import DegreeOfFreedom
-#from helpers.JobTracker import JobTracker
-#from helpers.Gridpack import Gridpack
+from helpers.helper_tools import linspace
+from helpers.ScanType import ScanType
+from helpers.BatchType import BatchType
+from helpers.DegreeOfFreedom import DegreeOfFreedom
+from helpers.JobTracker import JobTracker
+from helpers.Gridpack import Gridpack
 
 #NOTE: The template directory should contain run_card.dat and customizecards.dat files
 PROCESS_MAP = {
@@ -116,15 +109,13 @@ ctlSi = DegreeOfFreedom(name='ctlSi',relations=[['ctlS1','ctlS2','ctlS3'],1.0])
 ctlTi = DegreeOfFreedom(name='ctlTi',relations=[['ctlT1','ctlT2','ctlT3'],1.0])
 
 # For submitting many gridpack jobs on cmsconnect
-def cmsconnect_chain_submit(dofs,proc_list):
+def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts):
     tracker = JobTracker(fdir=".")
 
-    #tag_postfix = '16DRandomStartTopDecayDefaultPDF'
-    tag_postfix = 'RefCheck'
-    max_gen = 5
-    max_int = 5
-    max_run = 50
-    int_cut = 45*60
+    max_gen = 5         # Max number of CODEGEN jobs to have running
+    max_int = 5         # Max number of INTEGRATE jobs to have running
+    max_run = 50        # Max number of total jobs running
+    int_cut = 45*60     # Time (relative to INTEGRATE step) before additional jobs can get submitted
     delay = 5.0*60      # Time between checks
     tracker.setIntegrateCutoff(int_cut)
     done = False
@@ -157,7 +148,7 @@ def cmsconnect_chain_submit(dofs,proc_list):
             submitted += submit_1dim_jobs(
                 gp=gridpack,
                 dofs=dofs,
-                npts=10,
+                npts=rwgt_pts,
                 tag_postfix=tag_postfix,
                 max_submits=max_submits
             )
@@ -188,8 +179,8 @@ def cmsconnect_chain_submit(dofs,proc_list):
 def submit_1dim_jobs(gp,dofs,npts,tag_postfix='',max_submits=-1):
     submitted = 0
     delay    =  10.0   # Time between successful submits (in seconds)
-    low_lim  = -5.0#-50.0
-    high_lim =  5.0# 50.0
+    low_lim  = -25.0
+    high_lim =  25.0
     runs = 5
     for dof in dofs:
         dof_subset = [dof]
@@ -255,13 +246,12 @@ def main():
     random.seed()
     stype = ScanType.SLINSPACE
     btype = BatchType.CMSCONNECT
-    tag   = 'Range5to5'
+    tag   = 'ExampleTagName'
     rwgt_pts  = 10
     proc_list = ['ttllDecay']
     dof_list  = [
-        #ctW,ctp,cpQM,ctZ,ctG,cbW,cpQ3,cptb,cpt,
-        #cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi
-        cbW
+        ctW,ctp,cpQM,ctZ,ctG,cbW,cpQ3,cptb,cpt,
+        cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi
     ]
 
     if stype == ScanType.SLINSPACE:
@@ -269,13 +259,9 @@ def main():
     elif stype == ScanType.FRANDOM:
         tag = tag + "FullScan"
 
-    if btype == BatchType.CMSCONNECT and False:
+    if btype == BatchType.CMSCONNECT:
         # For submitting on CMSCONNECT, uses a way to track job progress
-        #dof_list  = [cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi,ctW,ctp,cpQM,ctZ,ctG,cbW,cpQ3,cptb,cpt]
-        #proc_list = ['ttHDecay','ttllDecay','ttlnuDecay','tllqDecay']
-        dof_list  = [ctp,ctli,ctlSi,cQei]
-        proc_list = ['tllqDecay']
-        cmsconnect_chain_submit(dof_list,proc_list)
+        cmsconnect_chain_submit(dof_list,proc_list,tag,rwgt_pts)
         return
 
     # Generic gridpack production example

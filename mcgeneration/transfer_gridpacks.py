@@ -4,20 +4,11 @@ import subprocess
 #NOTE: This is meant to transfer two files in the format: p_c_r_scanpoints.txt and p_c_r_*_tarball.tar.xz
 
 # voms-proxy-init -voms cms -valid 192:00
-# /tmp/x509up_u92084
-
-# gfal-stat 'gsiftp://deepthought.crc.nd.edu/hadoop/store/user/awightma/gridpack_scans/ctG/ttH_ctG_run2_slc6_amd64_gcc630_CMSSW_9_3_0_tarball.tar.xz'
-# gfal-sum 'gsiftp://deepthought.crc.nd.edu/hadoop/store/user/awightma/gridpack_scans/ctG/ttH_ctG_run2_slc6_amd64_gcc630_CMSSW_9_3_0_tarball.tar.xz' MD5
-# scp awightma@lxplus.cern.ch:/afs/cern.ch/work/a/awightma/private/gridpack_production/genproductions/bin/MadGraph5_aMCatNLO awightma@earth.crc.nd.edu:/hadoop/store/user/awightma/gridpack_scans/2018_05_06/
-
 
 MAX_TRANSFERS = 999  # Limit the number of transfers per code running
 def main():
     good_fname = 'good_copies.log'
     bad_fname = 'failed_copies.log'
-
-    #source_dir = "/afs/cern.ch/user/a/awightma/workspace/private/gridpack_production/genproductions/bin/MadGraph5_aMCatNLO"
-    #source_host = ""
 
     protocol = 'gsiftp://'
     tar_host = 'deepthought.crc.nd.edu'
@@ -93,7 +84,6 @@ def getFilesToTransfer(fdir='.',p_wl=[],c_wl=[],r_wl=[]):
     search_strs = ['_tarball.tar.xz','_scanpoints.txt']
     files = []
     arr = getLocalFiles(fdir)
-    #for idx,f in enumerate(os.listdir(fdir)):
     for idx,f in enumerate(arr):
         if not isValidOr(f,search_strs):
             # The file does not contain any of the search strings
