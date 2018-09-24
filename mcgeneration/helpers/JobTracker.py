@@ -4,16 +4,18 @@ import math
 from helper_tools import run_process
 
 # Utility class for keeping track of gridpack production jobs
+# NOTE: This assumes that all the relevant log files are in the same directory
 class JobTracker(object):
     RUNNING = 'running'
     CODEGEN = 'codegen'
     INTEGRATE = 'intg_all'
     INTEGRATE_FILTER = 'intg_filter'
+    STUCK = 'stuck'
     FINISHED = 'finished'
 
     @classmethod
     def getJobTypes(cls):
-        return [cls.RUNNING,cls.CODEGEN,cls.INTEGRATE_ALL,cls.FINISHED]
+        return [cls.RUNNING,cls.CODEGEN,cls.INTEGRATE,cls.FINISHED]
 
     @classmethod
     def formatTime(cls,t):
@@ -30,6 +32,7 @@ class JobTracker(object):
     def __init__(self,fdir='.'):
         self.fdir = fdir
         self.intg_cutoff = -1
+        self.stuck_cutoff = -1
         self.update()
 
     def update(self):
@@ -39,12 +42,17 @@ class JobTracker(object):
         self.codegen = self.getCodeGenJobs()
         self.intg_full = self.getIntegrateJobs()
         self.intg_filter = self.getIntegrateJobs(self.intg_cutoff)
+        self.stuck = self.getStuckJobs(self.stuck_cutoff)
         self.finished = self.getFinishedJobs()
 
     def setIntegrateCutoff(self,v):
         self.intg_cutoff = v
 
+    def setStuckCutoff(self,v):
+        self.stuck_cutoff = v
+
     # Return a list of scanpoint files in the target directory
+    # TODO: Remove fdir as input to this function (use self.fdir instead!)
     def getScanpointFiles(self,fdir='.'):
         fnames = []
         for fn in os.listdir(fdir):
@@ -57,6 +65,7 @@ class JobTracker(object):
         return fnames
 
     # Check if the job has produced a tarball
+    # TODO: Remove fdir as input to this function (use self.fdir instead!)
     def hasTarball(self,chk_file,fdir='.'):
         arr = chk_file.split('_')
         p,c,r = arr[:3]
@@ -64,6 +73,7 @@ class JobTracker(object):
         return os.path.exists(fpath)
 
     # Check if the job is still in the code gen phase
+    # TODO: Remove fdir as input to this function (use self.fdir instead!)
     def isCodeGen(self,chk_file,fdir='.'):
         arr = chk_file.split('_')
         p,c,r = arr[:3]
@@ -82,10 +92,13 @@ class JobTracker(object):
         else:
             return False
 
+    def isStuck(self,fn):
+        return (fn in self.stuck)
+
     def isJob(self,file):
         return (file in self.all)
 
-    # Returns a list of all jobs
+    # Returns a list of all jobs (based on scanpoints.txt file)
     def getJobs(self):
         sp_files = self.getScanpointFiles(self.fdir)
         jobs = []
@@ -135,31 +148,82 @@ class JobTracker(object):
             subset.append(fn)
         return subset
 
+    # Checks for stuck jobs (Note: This only checks the .log file so won't catch jobs stuck in the CODEGEN phase)
+    def getStuckJobs(self,cutoff):
+        subset = []
+        if cutoff < 0:
+            return subset
+        running = self.getRunningJobs()
+        for fn in running:
+            t = self.getStuckTime(fn)
+            if t > cutoff:
+                subset.append(fn)
+        return subset
+
     # Returns how long the job has been in the integrate phase
     def getIntegrateTime(self,fn):
         if not self.isJob(fn):
             return 0
         p,c,r = fn.split('_')
-        cgfn  = "%s_%s_%s_codegen.log" % (p,c,r)
-        logfn = "%s_%s_%s.log" % (p,c,r)
-        cgpath = os.path.join(self.fdir,cgfn)
-        fnpath = os.path.join(self.fdir,logfn)
-        if not os.path.exists(cgpath) or not os.path.exists(fnpath):
+        fpath1 = os.path.join(self.fdir,"%s_%s_%s_codegen.log" % (p,c,r))
+        fpath2 = os.path.join(self.fdir,"%s_%s_%s.log" % (p,c,r))
+        return self.getModifiedTimeDifference(fpath2,fpath1)
+
+    # Returns time since the log file was last updated (relative to now)
+    def getStuckTime(self,fn):
+        if not self.isJob(fn):
             return 0
-        cgstats = os.stat(cgpath)
-        fnstats = os.stat(fnpath)
-        return int(fnstats.st_mtime - cgstats.st_mtime)
+        p,c,r = fn.split('_')
+        fpath = os.path.join(self.fdir,"%s_%s_%s.log" % (p,c,r))
+        return self.getLastModifiedTime(fpath)
+
+    # Returns the time the job spent in the codegen phase
+    def getCodegenTime(self,fn):
+        dt = 0
+        if not self.isJob(fn):
+            return dt
+        p,c,r = fn.split('_')
+        if fn in self.codegen:
+            # The Job is still in the codegen phase --> use scanpoints file to determine time
+            fpath = os.path.join(self.fdir,"%s_%s_%s_scanpoints.txt" % (p,c,r))
+            dt = self.getLastModifiedTime(fpath)
+        else:
+            # The job is out of the codegen phase
+            fpath1 = os.path.join(self.fdir,"%s_%s_%s_scanpoints.txt" % (p,c,r))
+            fpath2 = os.path.join(self.fdir,"%s_%s_%s_codegen.log" % (p,c,r))
+            dt = self.getModifiedTimeDifference(fpath2,fpath1)
+        return dt
+
+    # Returns the absolute time difference (in seconds) since last modification between two files
+    def getModifiedTimeDifference(self,fpath1,fpath2):
+        if not os.path.exists(fpath1) or not os.path.exists(fpath2):
+            return 0
+        fstats1 = os.stat(fpath1)
+        fstats2 = os.stat(fpath2)
+        return int(abs(fstats2.st_mtime - fstats1.st_time))
+
+    # Returns the time (relative to now) since the file was last modified
+    def getLastModifiedTime(self,fpath):
+        if not os.path.exists(fpath):
+            return 0
+        fstat = os.stat(fpath)
+        tstamp = datetime.datetime.fromtimestamp(fstat.st_mtime)
+        dt = datetime.datetime.now() - tstamp
+        return (dt.days*3600*24 + dt.seconds)
 
     # Reads the last n lines from each of the jobs still in the integrate phase
     def checkProgress(self,lines=5):
-        for fn in self.intg_full:
+        for fn in sorted(self.intg_full,key=self.getIntegrateTime):
             log_file = os.path.join(self.fdir,"%s.log" % (fn))
             if not os.path.exists(log_file):
                 continue
             t = self.getIntegrateTime(fn)
             h,m,s = self.formatTime(t)
-            t_str = "[%s:%s:%s]" % (h.rjust(2,"0"),m.rjust(2,"0"),s.rjust(2,"0"))
-            print "\nChecking: %s - %s" % (fn,t_str)
+            int_tstr = "[%s:%s:%s]" % (h.rjust(2,"0"),m.rjust(2,"0"),s.rjust(2,"0"))
+            t = self.getLastModifiedTime(fn)
+            h,m,s = self.formatTime(t)
+            mod_tstr = "[%s:%s:%s]" % (h.rjust(2,"0"),m.rjust(2,"0"),s.rjust(2,"0"))
+            print "\nChecking: %s - %s - %s" % (fn,int_tstr,mod_tstr)
             run_process(['tail','-n%d' % (lines),log_file])
 
     def displayJobList(self,s,arr):
@@ -180,13 +244,19 @@ class JobTracker(object):
             self.displayJobList("Integrate",self.intg_full)
         if self.INTEGRATE_FILTER in wl:
             self.displayJobList("Integrate(f)",self.intg_filter)
+        if self.STUCK in wl:
+            self.displayJobList("Stuck",self.stuck)
         if self.FINISHED in wl:
             self.displayJobList("Finished", self.finished)
 
 if __name__ == "__main__":
-    tracker = JobTracker(fdir=".")
+    curr_dir = os.getcwd()
+    tracker = JobTracker(fdir=curr_dir)
     t_cutoff = 30*60
+    s_cutoff = 30*60
     tracker.setIntegrateCutoff(t_cutoff)
+    tracker.setStuckCutoff(s_cutoff)
     tracker.update()
-    tracker.showJobs(wl=[JobTracker.RUNNING,JobTracker.CODEGEN,JobTracker.INTEGRATE,JobTracker.INTEGRATE_FILTER])
+    job_list = [JobTracker.RUNNING,JobTracker.CODEGEN,JobTracker.INTEGRATE,JobTracker.INTEGRATE_FILTER,JobTracker.STUCK]
+    tracker.showJobs(wl=job_list)
     tracker.checkProgress(lines=5)

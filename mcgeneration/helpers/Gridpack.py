@@ -23,6 +23,9 @@ class Gridpack(object):
         self.MG_REWEIGHT_CARD = 'reweight_card.dat'
         self.MG_RUN_CARD      = 'run_card.dat'
 
+        # The custom limits file for determining range of WC values
+        self.LIMITS_FILE = "dim6top_LO_UFO_limits.txt"
+
         # These file name conventions are determined by genproductions scripts
         self.TARBALL_POSTFIX  = 'tarball'
         self.TARBALL_TYPE     = 'tar.xz'
@@ -121,6 +124,7 @@ class Gridpack(object):
         has_gridrun   = os.path.exists(self.getGridrunOutputDirectory())
         return (has_setup_dir or has_tarball or has_gridrun or has_scanfile)
 
+    # Print WC limit related settings
     def limitSettings(self,header=True,depth=0):
         indent = "\t"*depth
         info = ""
@@ -137,6 +141,7 @@ class Gridpack(object):
             info += "]\n"
         return info
 
+    # Print directory related settings
     def directorySettings(self,header=True,depth=0):
         indent = "\t"*depth
         info = ""
@@ -168,6 +173,7 @@ class Gridpack(object):
         info += self.limitSettings(header=True,depth=depth)
         return info
 
+    # Print configure related settings
     def configureSettings(self,header=True,depth=0):
         indent = "\t"*depth
         info = ""
@@ -230,7 +236,7 @@ class Gridpack(object):
             num_pts = int(num_pts)
         self.ops['rwgt_pts'] = num_pts
 
-        wc_limits = parse_limit_file(os.path.join(self.LIMITS_DIR,"dim6top_LO_UFO_limits.txt"))
+        wc_limits = parse_limit_file(os.path.join(self.LIMITS_DIR,self.LIMITS_FILE))
         for idx,c in enumerate(self.ops['coeffs'].keys()):
             # Set the limits based on limits file (if needed/possible)
             if self.ops['coeffs'][c].hasLimits():
@@ -238,10 +244,11 @@ class Gridpack(object):
                 continue
             key = "%s_%s" % (self.ops['limits_name'],c)
             if wc_limits.has_key(key):
+                # Use limits based on those found in the limits file
                 low  = round(wc_limits[key][0],6)
                 high = round(wc_limits[key][1],6)
             else:
-                # The WC doesn't exist in the limits file
+                # The WC doesn't exist in the limits file, so use defaults
                 low  = def_low
                 high = def_high
             if start_pt.has_key(c):
