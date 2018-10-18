@@ -112,8 +112,7 @@ ctlTi = DegreeOfFreedom(name='ctlTi',relations=[['ctlT1','ctlT2','ctlT3'],1.0])
 
 # For submitting many gridpack jobs on cmsconnect
 def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype):
-    tracker = JobTracker(fdir=".")
-    runs = 7
+    tracker = JobTracker(fdir=os.getcwd())
     max_gen = 5         # Max number of CODEGEN jobs to have running
     max_int = 5         # Max number of INTEGRATE jobs to have running
     max_run = 50        # Max number of total jobs running
@@ -159,15 +158,17 @@ def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype):
                 )
             elif stype == ScanType.FRANDOM:
                 start_pts = []
-                pt = {}
-                for dof in dofs:
-                    pt[dof.getName()] = 4.0 # Robert starting value
-                start_pts.append(pt)
+                for idx in range(runs):
+                    # Note: This means all runs will have the same MadGraph starting point
+                    pt = {}
+                    for dof in dofs:
+                        pt[dof.getName()] = 4.0 # Robert starting value
+                    start_pts.append(pt)
                 submitted += submit_ndim_jobs(
                     gp=gridpack,
                     dofs=dofs,
-                    npts=10,
-                    runs=4,
+                    npts=rwgt_pts,
+                    runs=runs,
                     tag=tag_postfix,
                     start_pts=start_pts,
                     max_submits=max_submits
@@ -256,7 +257,7 @@ def main():
     tag   = 'ExampleTagName'
     runs  = 7
     rwgt_pts  = 10
-    proc_list = ['ttHDecay']
+    proc_list = ['ttH']
     dof_list  = [
         ctW,ctp,cpQM,ctZ,ctG,cbW,cpQ3,cptb,cpt,
         cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi

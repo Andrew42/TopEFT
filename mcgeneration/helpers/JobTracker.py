@@ -200,7 +200,7 @@ class JobTracker(object):
             return 0
         fstats1 = os.stat(fpath1)
         fstats2 = os.stat(fpath2)
-        return int(abs(fstats2.st_mtime - fstats1.st_time))
+        return int(abs(fstats2.st_mtime - fstats1.st_mtime))
 
     # Returns the time (relative to now) since the file was last modified
     def getLastModifiedTime(self,fpath):
@@ -220,7 +220,7 @@ class JobTracker(object):
             t = self.getIntegrateTime(fn)
             h,m,s = self.formatTime(t)
             int_tstr = "[%s:%s:%s]" % (h.rjust(2,"0"),m.rjust(2,"0"),s.rjust(2,"0"))
-            t = self.getLastModifiedTime(fn)
+            t = self.getLastModifiedTime(log_file)
             h,m,s = self.formatTime(t)
             mod_tstr = "[%s:%s:%s]" % (h.rjust(2,"0"),m.rjust(2,"0"),s.rjust(2,"0"))
             print "\nChecking: %s - %s - %s" % (fn,int_tstr,mod_tstr)
