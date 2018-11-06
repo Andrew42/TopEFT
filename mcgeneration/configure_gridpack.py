@@ -255,7 +255,7 @@ def main():
     stype = ScanType.SLINSPACE
     btype = BatchType.CMSCONNECT
     tag   = 'ExampleTagName'
-    runs  = 7
+    runs  = 1
     rwgt_pts  = 10
     proc_list = ['ttH']
     dof_list  = [
@@ -294,15 +294,26 @@ def main():
             btype=btype
         )
 
-        submitted += submit_1dim_jobs(
-            gp=gridpack,
-            dofs=dof_list,
-            npts=rwgt_pts,
-            runs=runs,
-            tag_postfix=tag,
-            max_submits=-1,
-            run_wl=[]
-        )
+        if stype == ScanType.FRANDOM:
+            submitted += submit_ndim_jobs(
+                gp=gridpack,
+                dofs=dof_list,
+                npts=rwgt_pts,
+                runs=runs,
+                tag=tag,
+                start_pts=[],
+                max_submits=-1
+            )
+        elif stype == ScanType.SLINSPACE
+            submitted += submit_1dim_jobs(
+                gp=gridpack,
+                dofs=dof_list,
+                npts=rwgt_pts,
+                runs=runs,
+                tag_postfix=tag,
+                max_submits=-1,
+                run_wl=[]
+            )
 
 if __name__ == "__main__":
     main()
