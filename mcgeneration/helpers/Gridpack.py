@@ -436,19 +436,17 @@ class Gridpack(object):
         else:
             os.mkdir(output_dir)
 
-        print "\tMoving tarball..."
         tarball = self.getTarballString()
+        if not os.path.exists(tarball):
+            print "No tarball file found! Skipping..."
+            return
+        print "\tMoving tarball..."
         shutil.move(tarball,output_dir)
-        #shutil.copy(tarball,output_dir)
 
         os.chdir(output_dir)
 
         print "\tExtracting tarball..."
         run_process(['tar','xaf',tarball])
-
-        #events = self.ops['run_events']
-        #seed   = self.ops['run_seed']
-        #cores  = self.ops['run_cores']
 
         print "\tRunning gridpack..."
         run_process(['./runcmsgrid.sh',str(events),str(seed),str(cores)])
