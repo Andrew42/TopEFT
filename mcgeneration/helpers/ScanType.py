@@ -1,3 +1,5 @@
+import random
+
 from helper_tools import linspace, check_point
 
 class ScanType(object):
