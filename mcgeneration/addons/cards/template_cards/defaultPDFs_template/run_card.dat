@@ -146,7 +146,7 @@
  0.0  = etajmin ! min rap for the jets
  0.0  = etabmin ! min rap for the b
  0.0  = etaamin ! min rap for the photons
- 0.0  = etalmin ! main rap for the charged leptons
+ 0.0  = etalmin ! min rap for the charged leptons
 #*********************************************************************
 # Minimum and maximum DeltaR distance                                *
 #*********************************************************************

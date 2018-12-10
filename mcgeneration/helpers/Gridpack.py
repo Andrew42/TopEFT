@@ -55,33 +55,35 @@ class Gridpack(object):
             'run': 0,
             'coeffs': [],
             'start_pt': {},
-            'rwgt_pts': 0,
+            'num_rwgt_pts': 0,
             'limits_name': limits_name,     # The process name as it appears in the limits file
             'process_card': proc_card,      # The name of the process card to be used (e.g. ttHDecay.dat)
             'template_dir': template_dir,   # The path (relative to the CARD_DIR) to the dir with the template run and customize cards
         }
 
         self.is_configured = False
-
         return
 
     ################################################################################################
-    # Construct the gridpack setup string (this is basically the name of the gridpack!)
     def getSetupString(self):
+        """ Construct the gridpack setup string (basically the name of the gridpack) """
         return "%s_%s_run%d" % (self.ops['process'],self.ops['tag'],self.ops['run'])
 
-    # Construct the tarball file string
     def getTarballString(self):
+        """ Construct the tarball file string """
         setup = self.getSetupString()
         return '%s_%s_%s_%s.%s' % (setup,self.CURR_ARCH,self.CURR_RELEASE,self.TARBALL_POSTFIX,self.TARBALL_TYPE)
 
-    # Construct the scanpoints file string
     def getScanfileString(self):
+        """ Construct the scanpoints file string """
         setup = self.getSetupString()
         return '%s_%s.%s' % (setup,self.SCANFILE_POSTFIX,self.SCANFILE_TYPE)
 
-    # The directory were the running of the gridpack will take place
     def getGridrunOutputDirectory(self,create=False):
+        """
+            Returns the full path to the directory were unpacking and running of a generated gridpack
+            will take place
+        """
         if os.getcwd() != self.HOME_DIR:
             err_str = "Call to getGridrunOutputDirectory() when not in self.HOME_DIR!"
             err_str += "\n\tself.HOME_DIR: %s" % (self.HOME_DIR)
@@ -95,8 +97,11 @@ class Gridpack(object):
         setup = self.getSetupString()
         return os.path.join(process_subdir,"%s" % (setup))
 
-    # The directory were the genproductions script will look to read the MadGraph cards
     def getTargetDirectory(self,create=False):
+        """
+            Returns the full path to the directory were the genproductions framework will in order
+            to read the MadGraph cards
+        """
         if os.getcwd() != self.HOME_DIR:
             err_str = "Call to getTargetDirectory() when not in self.HOME_DIR!"
             err_str += "\n\tself.HOME_DIR: %s" % (self.HOME_DIR)
@@ -111,8 +116,11 @@ class Gridpack(object):
             os.mkdir(target_dir)
         return target_dir
 
-    # Check whether or not this gridpack has already been made (or started to be made)
     def exists(self):
+        """ 
+            Checks for the existence of certain files/directories in order to determine if this
+            gridpack configuration has already been produced (or is in the process of being produced)
+        """
         if os.getcwd() != self.HOME_DIR:
             err_str  = "Call to exists() when not in self.HOME_DIR!"
             err_str += "\n\tself.HOME_DIR: %s" % (self.HOME_DIR)
@@ -124,8 +132,8 @@ class Gridpack(object):
         has_gridrun   = os.path.exists(self.getGridrunOutputDirectory())
         return (has_setup_dir or has_tarball or has_gridrun or has_scanfile)
 
-    # Print WC limit related settings
     def limitSettings(self,header=True,depth=0):
+        """ Print settings related to the limits used for setting values of the DoFs """
         indent = "\t"*depth
         info = ""
         if header: info += indent + "Limit Settings: %s\n" % (self.getSetupString())
@@ -141,8 +149,8 @@ class Gridpack(object):
             info += "]\n"
         return info
 
-    # Print directory related settings
     def directorySettings(self,header=True,depth=0):
+        """ Print the settings for various directories to be used by the genproductions framework """
         indent = "\t"*depth
         info = ""
         if header: 
@@ -154,8 +162,8 @@ class Gridpack(object):
         info += indent + "Gridrun Dir : %s\n" % (os.path.join(".",self.getGridrunOutputDirectory()))
         return info
 
-    # Pruned down list of settings to print
     def baseSettings(self,header=True,depth=0):
+        """ Print a pruned down list of settings for this gridpack instance """
         indent = "\t"*depth
         info = ""
         if header: 
@@ -168,13 +176,13 @@ class Gridpack(object):
         info += indent + "Process Card: %s\n" % (self.ops['process_card'])
         info += indent + "ScanType    : %s\n" % (self.ops['stype'])
         info += indent + "BatchType   : %s\n" % (self.ops['btype'])
-        info += indent + "Rwgt Points : %d\n" % (self.ops['rwgt_pts'])
-        info += indent + "Scan Points : %d\n" % (len(ScanType.getPoints(self.ops['coeffs'],self.ops['rwgt_pts'],self.ops['stype'])))
+        info += indent + "Rwgt Points : %d\n" % (self.ops['num_rwgt_pts'])
+        info += indent + "Scan Points : %d\n" % (len(ScanType.getPoints(self.ops['coeffs'],self.ops['num_rwgt_pts'],self.ops['stype'])))
         info += self.limitSettings(header=True,depth=depth)
         return info
 
-    # Print configure related settings
     def configureSettings(self,header=True,depth=0):
+        """ Print only the configure related settings for this gridpack instance """
         indent = "\t"*depth
         info = ""
         if header: 
@@ -185,8 +193,8 @@ class Gridpack(object):
         info += "\n"
         return info
 
-    # Print the settings for the gridpack
     def allSettings(self,header=True,depth=0):
+        """ Print all settings for this gridpack instance """
         indent = "\t"*depth
         info = ""
         if header: 
@@ -202,16 +210,18 @@ class Gridpack(object):
         info += indent + "BatchType   : %s\n" % (self.ops['btype'])
         info += indent + "Tarball File: %s\n" % (self.getTarballString())
         info += indent + "Scan File   : %s\n" % (self.getScanfileString())
-        info += indent + "Rwgt Points : %d\n" % (self.ops['rwgt_pts'])
-        info += indent + "Scan Points : %d\n" % (len(ScanType.getPoints(self.ops['coeffs'],self.ops['rwgt_pts'],self.ops['stype'])))
+        info += indent + "Rwgt Points : %d\n" % (self.ops['num_rwgt_pts'])
+        info += indent + "Scan Points : %d\n" % (len(ScanType.getPoints(self.ops['coeffs'],self.ops['num_rwgt_pts'],self.ops['stype'])))
         info += self.directorySettings(header=False,depth=depth)
         info += self.limitSettings(header=True,depth=depth)
         return info
 
     ################################################################################################
 
-    # Parses options to produce a gridpack in a particular way
     def configure(self,tag,run,dofs,num_pts,start_pt={},def_limits=[-10.0,10.0]):
+        """
+            Prases options to produce gridpack in a particular way.
+        """
         if len(def_limits) != 2:
             print "Invalid input for default limits!"
             self.is_configured = False
@@ -234,7 +244,7 @@ class Gridpack(object):
             elif self.ops['stype'] == ScanType.SLINSPACE:
                 num_pts = max(num_pts,3)
             num_pts = int(num_pts)
-        self.ops['rwgt_pts'] = num_pts
+        self.ops['num_rwgt_pts'] = num_pts
 
         wc_limits = parse_limit_file(os.path.join(self.LIMITS_DIR,self.LIMITS_FILE))
         for idx,c in enumerate(self.ops['coeffs'].keys()):
@@ -260,8 +270,11 @@ class Gridpack(object):
         self.is_configured = True
         return
 
-    # Setup/Create the needed folders and files for creating a gridpack
     def setup(self):
+        """
+            Sets up and/or creates the needed directories and files need for creating a gridpack
+            using the genproductions framework
+        """
         BatchType.isValid(self.ops['btype'])
         ScanType.isValid(self.ops['stype'])
 
@@ -305,7 +318,7 @@ class Gridpack(object):
         scanfile = self.getScanfileString()
         rwgt_tar = os.path.join(target_dir,"%s_%s" % (setup,self.MG_REWEIGHT_CARD))
         
-        scan_pts = ScanType.getPoints(self.ops['coeffs'],self.ops['rwgt_pts'],self.ops['stype'])
+        scan_pts = ScanType.getPoints(self.ops['coeffs'],self.ops['num_rwgt_pts'],self.ops['stype'])
 
         save_scan_points(scanfile,self.ops['coeffs'],scan_pts)
         make_reweight_card(rwgt_tar,self.ops['coeffs'],scan_pts)
@@ -323,8 +336,8 @@ class Gridpack(object):
         run_process(['sed','-i','-e',"s|SUBSETUP|%s|g" % (setup),proc_tar])
         return True
 
-    # Remove the folders/files created by setup() and/or submit() calls
     def clean(self):
+        """ Remove all folders/files created by the setup()/submit() methods """
         if not self.is_configured:
             print "The gridpack has not been configured yet, so no cleaning can be done!"
             return
@@ -380,8 +393,10 @@ class Gridpack(object):
             print "\tRemoving existing file: %s" % (codegen_file)
             os.remove(codegen_file)
 
-    # Create a gridpack using a specific BatchType
+        self.is_configured = False
+
     def submit(self):
+        """ Run one of genproductions gridpack generation scripts """
         setup = self.getSetupString()
         target_dir = self.getTargetDirectory()
         btype = self.ops['btype']
@@ -420,8 +435,8 @@ class Gridpack(object):
             return True
         return False
 
-    # Unpack and run an existing gridpack to produce events
     def run(self,events,seed,cores):
+        """ Unapack and run an existing gridpack to produce events in an LHE file """
         os.chdir(self.HOME_DIR)
 
         setup = self.getSetupString()

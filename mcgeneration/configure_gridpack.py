@@ -110,6 +110,8 @@ cQlMi = DegreeOfFreedom(name='cQlMi',relations=[['cQlM1','cQlM2','cQlM3'],1.0])
 ctlSi = DegreeOfFreedom(name='ctlSi',relations=[['ctlS1','ctlS2','ctlS3'],1.0])
 ctlTi = DegreeOfFreedom(name='ctlTi',relations=[['ctlT1','ctlT2','ctlT3'],1.0])
 
+all_coeffs = [ctp,cpQm,cpQ3,cpt,cptb,ctW,ctZ,cbW,ctG,cQQ1,cQQ8,cQt1,cQt8,ctt1,cQei,ctli,ctei,cQl3i,cQlMi,ctlSi,ctlTi]
+
 # For submitting many gridpack jobs on cmsconnect
 def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype):
     tracker = JobTracker(fdir=os.getcwd())
@@ -256,7 +258,7 @@ def main():
     btype = BatchType.CMSCONNECT
     tag   = 'ExampleTagName'
     runs  = 1
-    rwgt_pts  = 10
+    npts  = 10
     proc_list = ['ttH']
     dof_list  = [
         ctW,ctp,cpQM,ctZ,ctG,cbW,cpQ3,cptb,cpt,
@@ -274,7 +276,7 @@ def main():
             dofs=dof_list,
             proc_list=proc_list,
             tag_postfix=tag,
-            rwgt_pts=rwgt_pts,
+            rwgt_pts=npts,
             runs=runs,
             stype=stype)
         return
@@ -298,13 +300,13 @@ def main():
             submitted += submit_ndim_jobs(
                 gp=gridpack,
                 dofs=dof_list,
-                npts=rwgt_pts,
+                npts=npts,
                 runs=runs,
                 tag=tag,
                 start_pts=[],
                 max_submits=-1
             )
-        elif stype == ScanType.SLINSPACE
+        elif stype == ScanType.SLINSPACE:
             submitted += submit_1dim_jobs(
                 gp=gridpack,
                 dofs=dof_list,

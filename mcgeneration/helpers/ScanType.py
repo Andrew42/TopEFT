@@ -39,9 +39,12 @@ class ScanType(object):
         return pts
 
     @classmethod
-    def fullScanLinear(cls,dofs,num_pts):
+    def fullScanLinear(cls,dofs,npts):
+        """ Generate a list of n-D points for all DoFs using a grid scan. Will generate npts^N total
+            reweight points. This list of points is suitable for fitting an n-D quadratic.
+        """
         pts_arr = []
-        if num_pts == 0:
+        if npts == 0:
             return pts_arr
         sm_pt = {}
         start_pt = {}
@@ -50,7 +53,7 @@ class ScanType(object):
         for c in coeffs:
             sm_pt[c] = 0.0
             start_pt[c] = dofs[c].getStart()
-            arr += [linspace(dofs[c].getLow(),dofs[c].getHigh(),num_pts)]
+            arr += [linspace(dofs[c].getLow(),dofs[c].getHigh(),npts)]
         has_sm_pt = check_point(sm_pt,start_pt)
         mesh_pts = [a for a in itertools.product(*arr)]
         for rwgt_pt in mesh_pts:
@@ -69,9 +72,13 @@ class ScanType(object):
         return pts_arr
 
     @classmethod
-    def fullScanRandom(cls,dofs,num_pts):
+    def fullScanRandom(cls,dofs,npts):
+        """ Generate a list of n-D points for all DoFs sampled uniformly from the n-D space.
+            Will generate exactly npts reweight points. This list of points is suitable for fitting
+            an n-D quadratic
+        """
         pts_arr = []
-        if num_pts == 0:
+        if npts == 0:
             return pts_arr
         sm_pt = {}
         start_pt = {}
@@ -80,7 +87,7 @@ class ScanType(object):
             sm_pt[c] = 0.0
             start_pt[c] = dofs[c].getStart()
         has_sm_pt = check_point(sm_pt,start_pt)
-        for idx in range(num_pts):
+        for idx in range(npts):
             pt = {}
             for c in coeffs:
                 pt[c] = round(random.uniform(dofs[c].getLow(),dofs[c].getHigh()),6)
@@ -94,9 +101,13 @@ class ScanType(object):
         return pts_arr
 
     @classmethod
-    def axisScanLinear(cls,dofs,num_pts):
+    def axisScanLinear(cls,dofs,npts):
+        """ Generate a list of 1-D points with linear spacing. Will generate N*npts reweight points.
+            This list of point is only suitable for fitting 1-D quadratics as it will not include
+            any points involving cross terms.
+        """
         pts_arr = []
-        if num_pts == 0:
+        if npts == 0:
             return pts_arr
         sm_pt = {}
         start_pt = {}
@@ -106,7 +117,7 @@ class ScanType(object):
             start_pt[c] = dofs[c].getStart()
         has_sm_pt = check_point(sm_pt,start_pt)
         for c1 in coeffs:
-            arr = linspace(dofs[c1].getLow(),dofs[c1].getHigh(),num_pts)
+            arr = linspace(dofs[c1].getLow(),dofs[c1].getHigh(),npts)
             for v in arr:
                 pt = {}
                 for c2 in coeffs:
@@ -124,9 +135,13 @@ class ScanType(object):
         return pts_arr
 
     @classmethod
-    def axisScanRandom(cls,dofs,num_pts):
+    def axisScanRandom(cls,dofs,npts):
+        """ Generate a list of 1-D points sampled uniformly. Will generate N*npts reweight points.
+            This list of point is only suitable for fitting 1-D quadratics as it will not include
+            any points involving cross terms.
+        """
         pts_arr = []
-        if num_pts == 0:
+        if npts == 0:
             return pts_arr
         sm_pt = {}
         start_pt = {}
@@ -136,7 +151,7 @@ class ScanType(object):
             start_pt[c] = dofs[c].getStart()
         has_sm_pt = check_point(sm_pt,start_pt)
         for c1 in coeffs:
-            for idx in range(num_pts):
+            for idx in range(npts):
                 pt = {}
                 v = random.uniform(dofs[c1].getLow(),dofs[c1].getHigh())
                 for c2 in coeffs:
