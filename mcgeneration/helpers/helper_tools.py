@@ -95,6 +95,24 @@ def parse_limit_file(fpath):
             wc_limits[arr[0]] = [float(arr[1]),float(arr[2])]
     return wc_limits
 
+# Note: The returned list will contain the MG starting point as the first element!
+def parse_scan_file(fpath):
+    pts = []
+    with open(fpath,'r') as f:
+        coeffs = []
+        for idx,l in enumerate(f):
+            if idx == 0:
+                # The 0th line contains the WC names
+                coeffs = l.split()
+                continue
+            else:
+                vals = l.split()[1:]
+            pt = {}
+            for k,v in zip(coeffs,vals):
+                pt[k] = float(v)
+            pts.append(pt)
+    return pts
+
 # Calculates a random point between two specified values
 def calculate_start_point(low,high,rfact=1.25):
     #NOTE1: rfact determines how close to 0 the randomly sample WC stregnth can be

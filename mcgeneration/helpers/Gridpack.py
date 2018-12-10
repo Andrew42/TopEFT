@@ -61,6 +61,7 @@ class Gridpack(object):
             'template_dir': template_dir,   # The path (relative to the CARD_DIR) to the dir with the template run and customize cards
         }
 
+        self.scan_pts = []
         self.is_configured = False
         return
 
@@ -177,7 +178,7 @@ class Gridpack(object):
         info += indent + "ScanType    : %s\n" % (self.ops['stype'])
         info += indent + "BatchType   : %s\n" % (self.ops['btype'])
         info += indent + "Rwgt Points : %d\n" % (self.ops['num_rwgt_pts'])
-        info += indent + "Scan Points : %d\n" % (len(ScanType.getPoints(self.ops['coeffs'],self.ops['num_rwgt_pts'],self.ops['stype'])))
+        info += indent + "Scan Points : %d\n" % (len(self.scan_pts))
         info += self.limitSettings(header=True,depth=depth)
         return info
 
@@ -211,14 +212,14 @@ class Gridpack(object):
         info += indent + "Tarball File: %s\n" % (self.getTarballString())
         info += indent + "Scan File   : %s\n" % (self.getScanfileString())
         info += indent + "Rwgt Points : %d\n" % (self.ops['num_rwgt_pts'])
-        info += indent + "Scan Points : %d\n" % (len(ScanType.getPoints(self.ops['coeffs'],self.ops['num_rwgt_pts'],self.ops['stype'])))
+        info += indent + "Scan Points : %d\n" % (len(self.scan_pts))
         info += self.directorySettings(header=False,depth=depth)
         info += self.limitSettings(header=True,depth=depth)
         return info
 
     ################################################################################################
 
-    def configure(self,tag,run,dofs,num_pts,start_pt={},def_limits=[-10.0,10.0]):
+    def configure(self,tag,run,dofs,num_pts,start_pt={},def_limits=[-10.0,10.0],scan_file=None):
         """
             Prases options to produce gridpack in a particular way.
         """
@@ -236,37 +237,66 @@ class Gridpack(object):
         def_low  = def_limits[0]
         def_high = def_limits[1]
 
-        if num_pts > 0:
-            # Make sure we have enough points to reconstruct the parametrization
-            if self.ops['stype'] == ScanType.FRANDOM:
-                N = len(self.ops['coeffs'].keys())
-                num_pts = max(num_pts,1.2*(1+2*N+N*(N-1)/2))
-            elif self.ops['stype'] == ScanType.SLINSPACE:
-                num_pts = max(num_pts,3)
-            num_pts = int(num_pts)
-        self.ops['num_rwgt_pts'] = num_pts
+        if scan_file:
+            # Set starting point and rwgt points based on a scanpoints file
+            self.scan_pts = []
+            pts = parse_scan_file(scan_file)
+            missing_wc = []
+            for idx,pt in enumerate(pts):
+                new_pt = {}
+                for k,v in pt.iteritems():
+                    # Keep only the WCs which have been specified
+                    if self.ops['coeffs'].has_key(k):
+                        new_pt[k] = v
+                if idx == 0:
+                    # Set the starting point from the scanpoints file
+                    for k in self.ops['coeffs'].keys():
+                        if not new_pt.has_key(k):
+                            # Any WCs which are missing from the scanpoints file are set to SM value
+                            missing_wc.append(k)
+                            self.ops['coeffs'][k].setLimits(0,0,0)
+                        else:
+                            self.ops['coeffs'][k].setLimits(new_pt[k],0,0)
+                else:
+                    self.scan_pts.append(new_pt)
+            if len(missing_wc):
+                print "[WARNING] Scanpoints file is missing WCs used in this gridpack configuration, %s" % (str(missing_wc))
+            self.ops['num_rwgt_pts'] = len(self.scan_pts)
+        else:
+            self.scan_pts = []  # Clear the scan_pts array incase it was used previously
 
-        wc_limits = parse_limit_file(os.path.join(self.LIMITS_DIR,self.LIMITS_FILE))
-        for idx,c in enumerate(self.ops['coeffs'].keys()):
-            # Set the limits based on limits file (if needed/possible)
-            if self.ops['coeffs'][c].hasLimits():
-                # The dof already has limits set
-                continue
-            key = "%s_%s" % (self.ops['limits_name'],c)
-            if wc_limits.has_key(key):
-                # Use limits based on those found in the limits file
-                low  = round(wc_limits[key][0],6)
-                high = round(wc_limits[key][1],6)
-            else:
-                # The WC doesn't exist in the limits file, so use defaults
-                low  = def_low
-                high = def_high
-            if start_pt.has_key(c):
-                strength = start_pt[c]
-            else:
-                strength = calculate_start_point(low,high,1.25)
-            self.ops['coeffs'][c].setLimits(strength,low,high)
+        if len(self.scan_pts) == 0:
+            # The scan points will need to be set automatically
+            if num_pts > 0:
+                # Make sure we have enough points to reconstruct the parametrization
+                if self.ops['stype'] == ScanType.FRANDOM:
+                    N = len(self.ops['coeffs'].keys())
+                    num_pts = max(num_pts,1.2*(1+2*N+N*(N-1)/2))
+                elif self.ops['stype'] == ScanType.SLINSPACE:
+                    num_pts = max(num_pts,3)
+                num_pts = int(num_pts)
+            self.ops['num_rwgt_pts'] = num_pts
 
+            wc_limits = parse_limit_file(os.path.join(self.LIMITS_DIR,self.LIMITS_FILE))
+            for idx,c in enumerate(self.ops['coeffs'].keys()):
+                # Set the limits based on limits file (if needed/possible)
+                if self.ops['coeffs'][c].hasLimits():
+                    # The dof already has limits set
+                    continue
+                key = "%s_%s" % (self.ops['limits_name'],c)
+                if wc_limits.has_key(key):
+                    # Use limits based on those found in the limits file
+                    low  = round(wc_limits[key][0],6)
+                    high = round(wc_limits[key][1],6)
+                else:
+                    # The WC doesn't exist in the limits file, so use defaults
+                    low  = def_low
+                    high = def_high
+                if start_pt.has_key(c):
+                    strength = start_pt[c]
+                else:
+                    strength = calculate_start_point(low,high,1.25)
+                self.ops['coeffs'][c].setLimits(strength,low,high)
         self.is_configured = True
         return
 
@@ -318,10 +348,11 @@ class Gridpack(object):
         scanfile = self.getScanfileString()
         rwgt_tar = os.path.join(target_dir,"%s_%s" % (setup,self.MG_REWEIGHT_CARD))
         
-        scan_pts = ScanType.getPoints(self.ops['coeffs'],self.ops['num_rwgt_pts'],self.ops['stype'])
+        if len(self.scan_pts) == 0:
+            self.scan_pts = ScanType.getPoints(self.ops['coeffs'],self.ops['num_rwgt_pts'],self.ops['stype'])
 
-        save_scan_points(scanfile,self.ops['coeffs'],scan_pts)
-        make_reweight_card(rwgt_tar,self.ops['coeffs'],scan_pts)
+        save_scan_points(scanfile,self.ops['coeffs'],self.scan_pts)
+        make_reweight_card(rwgt_tar,self.ops['coeffs'],self.scan_pts)
 
         if self.SAVE_DIAGRAMS:
             # Remove the nojpeg option from the output line of the process card

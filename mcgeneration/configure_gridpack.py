@@ -110,7 +110,7 @@ cQlMi = DegreeOfFreedom(name='cQlMi',relations=[['cQlM1','cQlM2','cQlM3'],1.0])
 ctlSi = DegreeOfFreedom(name='ctlSi',relations=[['ctlS1','ctlS2','ctlS3'],1.0])
 ctlTi = DegreeOfFreedom(name='ctlTi',relations=[['ctlT1','ctlT2','ctlT3'],1.0])
 
-all_coeffs = [ctp,cpQm,cpQ3,cpt,cptb,ctW,ctZ,cbW,ctG,cQQ1,cQQ8,cQt1,cQt8,ctt1,cQei,ctli,ctei,cQl3i,cQlMi,ctlSi,ctlTi]
+all_coeffs = [ctp,cpQM,cpQ3,cpt,cptb,ctW,ctZ,cbW,ctG,cQQ1,cQQ8,cQt1,cQt8,ctt1,cQei,ctli,ctei,cQl3i,cQlMi,ctlSi,ctlTi]
 
 # For submitting many gridpack jobs on cmsconnect
 def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype):
@@ -255,7 +255,7 @@ def submit_ndim_jobs(gp,dofs,npts,runs,tag,start_pts=[],max_submits=-1):
 def main():
     random.seed()
     stype = ScanType.SLINSPACE
-    btype = BatchType.CMSCONNECT
+    btype = BatchType.NONE
     tag   = 'ExampleTagName'
     runs  = 1
     npts  = 10
