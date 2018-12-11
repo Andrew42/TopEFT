@@ -177,8 +177,8 @@ def submit_1dim_jobs(gp,dofs,npts,runs,tag_postfix='',max_submits=-1,run_wl=[]):
                 start_pt=pt
             )
             if not gp.exists():
-                print gp.baseSettings(),
                 gp.setup()
+                print gp.baseSettings(),
                 submitted += gp.submit()
                 time.sleep(delay)
                 print ""
@@ -210,8 +210,8 @@ def submit_ndim_jobs(gp,dofs,npts,runs,tag,start_pts=[],max_submits=-1):
             def_limits=[-20.0,20.0]
         )
         if not gp.exists():
-            print gp.baseSettings(),
             gp.setup()
+            print gp.baseSettings(),
             submitted += gp.submit()
             time.sleep(delay)
             print ""
@@ -236,8 +236,8 @@ def submit_scanfile_jobs(gp,dofs,tag,scan_files,max_submits=-1):
             scan_file=file
         )
         if not gp.exists():
-            print gp.baseSettings(),
             gp.setup()
+            print gp.baseSettings(),
             submitted += gp.submit()
             time.sleep(delay)
             print ""
