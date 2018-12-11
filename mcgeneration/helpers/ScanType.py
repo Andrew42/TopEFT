@@ -7,11 +7,12 @@ class ScanType(object):
     SRANDOM   = 'axis_random'
     FLINSPACE = 'full_linspace'
     SLINSPACE = 'axis_linspace'
+    FROMFILE  = 'from_file'
     NONE      = 'none'
 
     @classmethod
     def getTypes(cls):
-        return [cls.FRANDOM,cls.SRANDOM,cls.FLINSPACE,cls.SLINSPACE,cls.NONE]
+        return [cls.FRANDOM,cls.SRANDOM,cls.FLINSPACE,cls.SLINSPACE,cls.FROMFILE,cls.NONE]
 
     @classmethod
     def isValid(cls,stype):
@@ -34,7 +35,7 @@ class ScanType(object):
         elif stype == cls.SRANDOM:
             # Axis scan (no xterms) with random sampling along the axis
             cls.axisScanRandom(dofs,num_pts)
-        elif stype == cls.NONE:
+        elif stype == cls.FROMFILE or stype == cls.NONE:
             pts = []
         return pts
 

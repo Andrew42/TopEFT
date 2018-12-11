@@ -21,6 +21,21 @@ PROCESS_MAP = {
         'process_card': 'ttH.dat',
         'template_dir': 'template_cards/defaultPDFs_template'
     },
+    'ttll': {
+        'name': 'ttll',
+        'process_card': 'ttll.dat',
+        'template_dir': 'template_cards/centralTTZ_template'
+    },
+    'ttlnu': {
+        'name': 'ttlnu',
+        'process_card': 'ttlnu.dat',
+        'template_dir': 'template_cards/defaultPDFs_template'
+    },
+    'tllq': {
+        'name': 'tllq',
+        'process_card': 'tllq.dat',
+        'template_dir': 'template_cards/defaultPDFs_template'
+    },
     'ttHJet': {
         'name': 'ttH',
         'process_card': 'ttHJet.dat',
@@ -30,62 +45,7 @@ PROCESS_MAP = {
         'name': 'ttH',
         'process_card': 'ttHDecay.dat',
         'template_dir': 'template_cards/defaultPDFs_template'
-    },
-    'ttW': {
-        'name': 'ttW',
-        'process_card': 'ttW.dat',
-        'template_dir': 'template_cards/test_template'
-    },
-    'ttZ': {
-        'name': 'ttZ',
-        'process_card': 'ttZ.dat',
-        'template_dir': 'template_cards/test_template'
-    },
-    'ttll': {
-        'name': 'ttll',
-        'process_card': 'ttll.dat',
-        'template_dir': 'template_cards/defaultPDFs_template'
-    },
-    'ttllJet': {
-        'name': 'ttll',
-        'process_card': 'ttllJet.dat',
-        'template_dir': 'template_cards/jets_template'
-    },
-    'ttllDecay': {
-        'name': 'ttll',
-        'process_card': 'ttllDecay.dat',
-        'template_dir': 'template_cards/defaultPDFs_template'
-    },
-    'ttlnu': {
-        'name': 'ttlnu',
-        'process_card': 'ttlnu.dat',
-        'template_dir': 'template_cards/defaultPDFs_template'
-    },
-    'ttlnuJet': {
-        'name': 'ttlnu',
-        'process_card': 'ttlnu.dat',
-        'template_dir': 'template_cards/jets_template'
-    },
-    'ttlnuDecay': {
-        'name': 'ttlnu',
-        'process_card': 'ttlnuDecay.dat',
-        'template_dir': 'template_cards/defaultPDFs_template'
-    },
-    'tllq': {
-        'name': 'tllq',
-        'process_card': 'tllq.dat',
-        'template_dir': 'template_cards/defaultPDFs_template'
-    },
-    'tllqJet': {
-        'name': 'tllq',
-        'process_card': 'tllqJet.dat',
-        'template_dir': 'template_cards/jets_template'
-    },
-    'tllqDecay': {
-        'name': 'tllq',
-        'process_card': 'tllqDecay.dat',
-        'template_dir': 'template_cards/defaultPDFs_template'
-    },
+    }
 }
 
 ctp   = DegreeOfFreedom(name='ctp'  ,relations=[['ctp'] ,1.0])
@@ -113,7 +73,7 @@ ctlTi = DegreeOfFreedom(name='ctlTi',relations=[['ctlT1','ctlT2','ctlT3'],1.0])
 all_coeffs = [ctp,cpQM,cpQ3,cpt,cptb,ctW,ctZ,cbW,ctG,cQQ1,cQQ8,cQt1,cQt8,ctt1,cQei,ctli,ctei,cQl3i,cQlMi,ctlSi,ctlTi]
 
 # For submitting many gridpack jobs on cmsconnect
-def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype):
+def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_files=[]):
     tracker = JobTracker(fdir=os.getcwd())
     max_gen = 5         # Max number of CODEGEN jobs to have running
     max_int = 5         # Max number of INTEGRATE jobs to have running
@@ -174,6 +134,15 @@ def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype):
                     tag=tag_postfix,
                     start_pts=start_pts,
                     max_submits=max_submits
+                )
+            elif stype == ScanType.FROMFILE:
+                submitted += submit_scanfile_jobs(
+                    gp=gridpack,
+                    dofs=dofs,
+                    tag=tag_postfix,
+                    scan_files=scan_files,
+                    max_submits=max_submits
+
                 )
             if submitted >= max_submits:
                 break
@@ -252,14 +221,45 @@ def submit_ndim_jobs(gp,dofs,npts,runs,tag,start_pts=[],max_submits=-1):
             return submitted
     return submitted
 
+# Creates gridpacks using starting points and rwgt points extracted from scanpoints files
+def submit_scanfile_jobs(gp,dofs,tag,scan_files,max_submits=-1):
+    submitted = 0
+    delay = 10.0
+    for idx,file in enumerate(scan_files):
+        if not os.path.exists(file):
+            continue
+        gp.configure(
+            tag=tag,
+            run=idx,
+            dofs=dofs,
+            num_pts=0,
+            scan_file=file
+        )
+        if not gp.exists():
+            print gp.baseSettings(),
+            gp.setup()
+            submitted += gp.submit()
+            time.sleep(delay)
+            print ""
+        else:
+            print "Skipping gridpack: %s" % (gp.getSetupString())
+        if max_submits > 0 and submitted >= max_submits:
+            return submitted
+    return submitted
+
 def main():
     random.seed()
     stype = ScanType.SLINSPACE
     btype = BatchType.NONE
-    tag   = 'ExampleTagName'
+    tag   = 'PartialCentralTTZ'
     runs  = 1
     npts  = 10
-    proc_list = ['ttH']
+    scan_files = [
+        'ttll_16DOldLimitsAxisScan_run0_scanpoints.txt',
+        'ttll_16DOldLimitsAxisScan_run1_scanpoints.txt',
+        'ttll_16DOldLimitsAxisScan_run2_scanpoints.txt',
+    ]
+    proc_list = ['ttll']
     dof_list  = [
         ctW,ctp,cpQM,ctZ,ctG,cbW,cpQ3,cptb,cpt,
         cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi
@@ -271,14 +271,15 @@ def main():
         tag = tag + "FullScan"
 
     if btype == BatchType.CMSCONNECT:
-        # For submitting on CMSCONNECT, uses a way to track job progress
+        # For submitting on CMSCONNECT, uses a way to track running jobs
         cmsconnect_chain_submit(
             dofs=dof_list,
             proc_list=proc_list,
             tag_postfix=tag,
             rwgt_pts=npts,
             runs=runs,
-            stype=stype)
+            stype=stype,
+            scan_files=scan_files)
         return
 
     # Generic gridpack production example

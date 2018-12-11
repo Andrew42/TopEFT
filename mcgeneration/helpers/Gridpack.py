@@ -220,9 +220,7 @@ class Gridpack(object):
     ################################################################################################
 
     def configure(self,tag,run,dofs,num_pts,start_pt={},def_limits=[-10.0,10.0],scan_file=None):
-        """
-            Prases options to produce gridpack in a particular way.
-        """
+        """ Parses options to produce gridpack in a particular way. """
         if len(def_limits) != 2:
             print "Invalid input for default limits!"
             self.is_configured = False
