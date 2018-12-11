@@ -255,9 +255,9 @@ def main():
     runs  = 1
     npts  = 10
     scan_files = [
-        'ttll_16DOldLimitsAxisScan_run0_scanpoints.txt',
-        'ttll_16DOldLimitsAxisScan_run1_scanpoints.txt',
-        'ttll_16DOldLimitsAxisScan_run2_scanpoints.txt',
+        'scanfiles/ttll_16DOldLimitsAxisScan_run0_scanpoints.txt',
+        'scanfiles/ttll_16DOldLimitsAxisScan_run1_scanpoints.txt',
+        'scanfiles/ttll_16DOldLimitsAxisScan_run2_scanpoints.txt',
     ]
     proc_list = ['ttll']
     dof_list  = [
