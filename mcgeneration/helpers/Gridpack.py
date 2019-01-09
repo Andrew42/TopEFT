@@ -312,6 +312,10 @@ class Gridpack(object):
             print "Skipping gridpack setup: %s" % (self.getSetupString())
             return False
 
+        if self.SAVE_DIAGRAMS and self.ops['btype'] != BatchType.LOCAL:
+            print "[ERROR] Invalid BatchType for saving diagrams: %s" % (self.ops['btype'])
+            return False
+
         print "Setup gridpack: %s..." % (self.getSetupString())
 
         # Set the random seed adding extra events to the pilotrun
@@ -436,7 +440,10 @@ class Gridpack(object):
         print "\tBatchType: %s" % (btype)
         if btype == BatchType.LOCAL:
             # For interactive/serial running
-            run_process(['./gridpack_generation.sh',setup,target_dir])
+            if self.SAVE_DIAGRAMS:
+                run_process(['./diagram_generation.sh',setup,target_dir])
+            else:
+                run_process(['./gridpack_generation.sh',setup,target_dir])
             return True
         elif btype == BatchType.LSF:
             # For batch running
