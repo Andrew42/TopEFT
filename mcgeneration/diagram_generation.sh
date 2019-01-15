@@ -238,21 +238,21 @@ make_gridpack () {
         is5FlavorScheme=1
       fi
     
-       #*FIXME* workaround for broken set cluster_queue and run_mode handling
-       if [ "$queue" != "condor" ]; then
-         echo "cluster_queue = $queue" >> ./$MGBASEDIRORIG/input/mg5_configuration.txt
-         if [ "$isscratchspace" -gt "0" ]; then
-             echo "cluster_temp_path = `echo $RUNHOME`" >> ./$MGBASEDIRORIG/input/mg5_configuration.txt
-         fi
-       elif [ "$queue" == "condor" ]; then
-         echo "cluster_queue = None" >> ./$MGBASEDIRORIG/input/mg5_configuration.txt
-         echo "run_mode = 1" >> ./$MGBASEDIRORIG/input/mg5_configuration.txt
-         echo "cluster_type = cms_condor" >> ./$MGBASEDIRORIG/input/mg5_configuration.txt
-       elif [ "$queue" == "condor_spool" ]; then
-         echo "cluster_queue = None" >> ./$MGBASEDIRORIG/input/mg5_configuration.txt
-         echo "run_mode = 1" >> ./$MGBASEDIRORIG/input/mg5_configuration.txt
-         echo "cluster_type = cms_condor_spool" >> ./$MGBASEDIRORIG/input/mg5_configuration.txt
-       fi
+      #*FIXME* workaround for broken set cluster_queue and run_mode handling
+      if [ "$queue" != "condor" ]; then
+        echo "cluster_queue = $queue" >> ./$MGBASEDIRORIG/input/mg5_configuration.txt
+        if [ "$isscratchspace" -gt "0" ]; then
+            echo "cluster_temp_path = `echo $RUNHOME`" >> ./$MGBASEDIRORIG/input/mg5_configuration.txt
+        fi
+      elif [ "$queue" == "condor" ]; then
+        echo "cluster_queue = None" >> ./$MGBASEDIRORIG/input/mg5_configuration.txt
+        echo "run_mode = 1" >> ./$MGBASEDIRORIG/input/mg5_configuration.txt
+        echo "cluster_type = cms_condor" >> ./$MGBASEDIRORIG/input/mg5_configuration.txt
+      elif [ "$queue" == "condor_spool" ]; then
+        echo "cluster_queue = None" >> ./$MGBASEDIRORIG/input/mg5_configuration.txt
+        echo "run_mode = 1" >> ./$MGBASEDIRORIG/input/mg5_configuration.txt
+        echo "cluster_type = cms_condor_spool" >> ./$MGBASEDIRORIG/input/mg5_configuration.txt
+      fi
     
       # Previous cluster_local_path setting  gets erased after
       # code-generation mg5_aMC execution, set it up again before the integrate step.
@@ -360,85 +360,19 @@ make_gridpack () {
     fi
     
     cd processtmp
-    
-    #################################
-    #Add PDF info and copy run card #
-    #################################
-    script_dir="${PRODHOME}/Utilities/scripts"
-    if [ ! -d "$script_dir" ]; then
-      script_dir=$(git rev-parse --show-toplevel)/Utilities/scripts
-    fi
-    
-    prepare_run_card $name $CARDSDIR $is5FlavorScheme $script_dir
-    
-    #copy provided custom fks params or cuts
-    if [ -e $CARDSDIR/${name}_cuts.f ]; then
-      echo "copying custom cuts.f file"
-      cp $CARDSDIR/${name}_cuts.f ./SubProcesses/cuts.f
-    fi
-    
-    if [ -e $CARDSDIR/${name}_FKS_params.dat ]; then
-      echo "copying custom FKS_params.dat file"
-      cp $CARDSDIR/${name}_FKS_params.dat ./Cards/FKS_params.dat
-    fi
-    
-    if [ -e $CARDSDIR/${name}_setscales.f ]; then
-      echo "copying custom setscales.f file"
-      cp $CARDSDIR/${name}_setscales.f ./SubProcesses/setscales.f
-    fi
-    
-    if [ -e $CARDSDIR/${name}_reweight_xsec.f ]; then
-      echo "copying custom reweight_xsec.f file"
-      cp $CARDSDIR/${name}_reweight_xsec.f ./SubProcesses/reweight_xsec.f
-    fi
-    
-    if [ -e $CARDSDIR/${name}_reweight_card.dat ]; then
-      echo "copying custom reweight file"
-      cp $CARDSDIR/${name}_reweight_card.dat ./Cards/reweight_card.dat
-    fi
-    
-    
-    #automatically detect NLO mode or LO mode from output directory
-    isnlo=0
-    if [ -e ./MCatNLO ]; then
-      isnlo=1
-    fi
-    
-    if [ "$isnlo" -gt "0" ]; then
-      #NLO mode  
-      #######################
-      #Run the integration and generate the grid
-      #######################
-      echo "No NLO mode"
-      exit 1
-    else
-      #LO mode
-      #######################
-      #Run the integration and generate the grid
-      #######################
-      echo "starting LO mode"
-      echo "done" > makegrid.dat
-      echo "set gridpack True" >> makegrid.dat
-      if [ -e $CARDSDIR/${name}_customizecards.dat ]; then
-              cat $CARDSDIR/${name}_customizecards.dat >> makegrid.dat
-              echo "" >> makegrid.dat
-      fi
-      echo "done" >> makegrid.dat
-    
-      #set +e
-      cat makegrid.dat | ./bin/generate_events pilotrun
-      echo "finished pilot run"
-   
-      pwd
 
-      exit 1
+    for proc in $(ls -d SubProcesses/P*); do
+        echo "Moving $proc..."
+        mv proc ../../../
+    done
 
-      #RWSEED=657343
-      #RWNEVT=1000
-      #./run.sh $RWNEVT $RWSEED
-      #mv $WORKDIR/process/madevent/Events/GridRun_${RWSEED}/"events.lhe.gz" $WORKDIR/"unweighted_events.lhe.gz"
-      #ls -ltr $WORKDIR
-    fi
+    exit 1
+    
+    #RWSEED=657343
+    #RWNEVT=1000
+    #./run.sh $RWNEVT $RWSEED
+    #mv $WORKDIR/process/madevent/Events/GridRun_${RWSEED}/"events.lhe.gz" $WORKDIR/"unweighted_events.lhe.gz"
+    #ls -ltr $WORKDIR
 }
 
 #exit on first error

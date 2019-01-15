@@ -32,7 +32,7 @@ make_tarball () {
     fi
 
     mkdir InputCards
-    cp $CARDSDIR/* InputCards
+    cp $CARDSIR/${name}*.* InputCards
 
     EXTRA_TAR_ARGS=""
     if [ -e $CARDSDIR/${name}_externaltarball.dat ]; then
@@ -151,10 +151,13 @@ make_gridpack () {
       
           echo "set run_mode  1" >> mgconfigscript
           if [ "$queue" == "condor" ]; then
-            echo "set cluster_type condor" >> mgconfigscript
+            echo "set cluster_type cms_condor" >> mgconfigscript
+            echo "set cluster_queue None" >> mgconfigscript
+          elif [ "$queue" == "condor_spool" ]; then
+            echo "set cluster_type cms_condor_spool" >> mgconfigscript
             echo "set cluster_queue None" >> mgconfigscript
           else
-            echo "set cluster_type lsf" >> mgconfigscript
+            echo "set cluster_type cms_lsf" >> mgconfigscript
             #*FIXME* broken in mg_amc 2.4.0
             #echo "set cluster_queue $queue" >> mgconfigscript
           fi 
@@ -271,7 +274,11 @@ make_gridpack () {
        elif [ "$queue" == "condor" ]; then
          echo "cluster_queue = None" >> ./$MGBASEDIRORIG/input/mg5_configuration.txt
          echo "run_mode = 1" >> ./$MGBASEDIRORIG/input/mg5_configuration.txt
-         echo "cluster_type = condor" >> ./$MGBASEDIRORIG/input/mg5_configuration.txt
+         echo "cluster_type = cms_condor" >> ./$MGBASEDIRORIG/input/mg5_configuration.txt
+       elif [ "$queue" == "condor_spool" ]; then
+         echo "cluster_queue = None" >> ./$MGBASEDIRORIG/input/mg5_configuration.txt
+         echo "run_mode = 1" >> ./$MGBASEDIRORIG/input/mg5_configuration.txt
+         echo "cluster_type = cms_condor_spool" >> ./$MGBASEDIRORIG/input/mg5_configuration.txt
        fi
     
       # Previous cluster_local_path setting  gets erased after
@@ -452,7 +459,7 @@ make_gridpack () {
       fi
       
       echo "finished pilot run"
-      cd $WORKDIR/process
+      cd $WORKDIR/processtmp
     
       if [ -e $CARDSDIR/${name}_externaltarball.dat ]; then
           gunzip ./Events/pilotrun_decayed_1/events.lhe.gz
@@ -544,8 +551,6 @@ make_gridpack () {
           prepare_reweight $isnlo $WORKDIR $scram_arch $CARDSDIR/${name}_reweight_card.dat 
       fi
     
-      cd $WORKDIR/process/madevent
-      
       #prepare madspin grids if necessary
       if [ -e $CARDSDIR/${name}_madspin_card.dat ]; then
         echo "import $WORKDIR/unweighted_events.lhe.gz" > madspinrun.dat
@@ -558,11 +563,10 @@ make_gridpack () {
     
       echo "preparing final gridpack"
       
-      
       #set to single core mode
-      echo "mg5_path = ../../mgbasedir" >> Cards/me5_configuration.txt
-      echo "cluster_temp_path = None" >> Cards/me5_configuration.txt
-      echo "run_mode = 0" >> Cards/me5_configuration.txt  
+      echo "mg5_path = ../../mgbasedir" >> ./madevent/Cards/me5_configuration.txt
+      echo "cluster_temp_path = None" >> ./madevent/Cards/me5_configuration.txt
+      echo "run_mode = 0" >> ./madevent/Cards/me5_configuration.txt  
         
       cd $WORKDIR
       
@@ -629,18 +633,14 @@ if [ -n "$5" ]
   then
     scram_arch=${5}
   else
-    scram_arch=slc6_amd64_gcc481
-# agrohsje 
-    scram_arch=slc6_amd64_gcc630
+    scram_arch=slc6_amd64_gcc630 #slc6_amd64_gcc481
 fi
 
 if [ -n "$6" ]
   then
     cmssw_version=${6}
   else
-    cmssw_version=CMSSW_7_1_30
-# agrohsje 
-    cmssw_version=CMSSW_9_3_0
+    cmssw_version=CMSSW_9_3_8 #CMSSW_7_1_30
 fi
  
 # jobstep can be 'ALL','CODEGEN', 'INTEGRATE', 'MADSPIN'

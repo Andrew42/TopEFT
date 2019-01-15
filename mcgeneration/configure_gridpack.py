@@ -45,6 +45,11 @@ PROCESS_MAP = {
         'name': 'ttH',
         'process_card': 'ttHDecay.dat',
         'template_dir': 'template_cards/defaultPDFs_template'
+    },
+    'tHq': {
+        'name': 'tHq',
+        'process_card': 'tHq.dat',
+        'template_dir': 'template_cards/tHq_template'
     }
 }
 
@@ -249,9 +254,9 @@ def submit_scanfile_jobs(gp,dofs,tag,scan_files,max_submits=-1):
 
 def main():
     random.seed()
-    stype = ScanType.SLINSPACE
+    stype = ScanType.NONE
     btype = BatchType.NONE
-    tag   = 'PartialCentralTTZ'
+    tag   = 'ExampleTag'
     runs  = 1
     npts  = 10
     scan_files = [
@@ -259,7 +264,7 @@ def main():
         'scanfiles/ttll_16DOldLimitsAxisScan_run1_scanpoints.txt',
         'scanfiles/ttll_16DOldLimitsAxisScan_run2_scanpoints.txt',
     ]
-    proc_list = ['ttll']
+    proc_list = ['ttH']
     dof_list  = [
         ctW,ctp,cpQM,ctZ,ctG,cbW,cpQ3,cptb,cpt,
         cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi
@@ -297,6 +302,11 @@ def main():
             btype=btype
         )
 
+        # For creating feynman diagrams
+        #gridpack.ops['save_diagrams'] = True
+        #gridpack.ops['use_coupling_model'] = True
+        #gridpack.ops['coupling_string'] = "FCNC=0 DIM6^2==1 DIM6_ctZ^2==1 DIM6_ctW^2==1"
+
         if stype == ScanType.FRANDOM:
             submitted += submit_ndim_jobs(
                 gp=gridpack,
@@ -317,6 +327,17 @@ def main():
                 max_submits=-1,
                 run_wl=[]
             )
+        elif stype == ScanType.NONE:
+            gridpack.configure(tag=tag,run=0,dofs=dof_list,num_pts=0)
+            if not gridpack.exists():
+                gridpack.setup()
+                print gridpack.baseSettings(),
+                submitted += gridpack.submit()
+                print ""
+            else:
+                print "Skipping gridpack: %s" % (gridpack.getSetupString())
+        else:
+            print "Invalid ScanType: %s" % (stype)
 
 if __name__ == "__main__":
     main()

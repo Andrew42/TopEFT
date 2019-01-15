@@ -59,6 +59,9 @@ class Gridpack(object):
             'limits_name': limits_name,     # The process name as it appears in the limits file
             'process_card': proc_card,      # The name of the process card to be used (e.g. ttHDecay.dat)
             'template_dir': template_dir,   # The path (relative to the CARD_DIR) to the dir with the template run and customize cards
+            'save_diagrams': False,         # Runs a modified version of the generation script that exits early to keep feynman diagrams
+            'use_coupling_model': False,    # Use the 'coupling_orders' version of the dim6 model
+            'coupling_string': None,        # If not None replace "DIM6=1" with the specified string in the process card
         }
 
         self.scan_pts = []
@@ -312,9 +315,13 @@ class Gridpack(object):
             print "Skipping gridpack setup: %s" % (self.getSetupString())
             return False
 
-        if self.SAVE_DIAGRAMS and self.ops['btype'] != BatchType.LOCAL:
+        if self.ops['save_diagrams'] and self.ops['btype'] != BatchType.LOCAL:
             print "[ERROR] Invalid BatchType for saving diagrams: %s" % (self.ops['btype'])
             return False
+
+        if self.ops['stype'] == ScanType.NONE:
+            # Don't do any reweighting
+            self.scan_pts = []
 
         print "Setup gridpack: %s..." % (self.getSetupString())
 
@@ -356,14 +363,18 @@ class Gridpack(object):
         save_scan_points(scanfile,self.ops['coeffs'],self.scan_pts)
         make_reweight_card(rwgt_tar,self.ops['coeffs'],self.scan_pts)
 
-        if self.SAVE_DIAGRAMS:
+        if self.ops['save_diagrams']:
             # Remove the nojpeg option from the output line of the process card
             print "\tSaving diagrams!"
             run_process(['sed','-i','-e',"s|SUBSETUP -nojpeg|SUBSETUP|g",proc_tar])
 
-        if self.USE_COUPLING_MODEL:
+        if not self.ops['coupling_string'] is None:
+            print "\tCustom Couplings: %s" % (self.ops['coupling_string'])
+            run_process(['sed','-i','-e',"s|DIM6=1|%s|g" % (self.ops['coupling_string']),proc_tar])
+
+        if self.ops['use_coupling_model']:
             print "\tUsing each_coupling_order model!"
-            run_process(['sed','-i','-e',"s|DIM6=1|%s|g" % (self.COUPLING_STRING),proc_tar])
+            run_process(['sed','-i','-e',"s|import model dim6top_LO_UFO|import model dim6top_LO_UFO_each_coupling_order|g",proc_tar])
 
         # Replace SUBSETUP in the process card
         run_process(['sed','-i','-e',"s|SUBSETUP|%s|g" % (setup),proc_tar])
@@ -440,7 +451,7 @@ class Gridpack(object):
         print "\tBatchType: %s" % (btype)
         if btype == BatchType.LOCAL:
             # For interactive/serial running
-            if self.SAVE_DIAGRAMS:
+            if self.ops['save_diagrams']:
                 run_process(['./diagram_generation.sh',setup,target_dir])
             else:
                 run_process(['./gridpack_generation.sh',setup,target_dir])
