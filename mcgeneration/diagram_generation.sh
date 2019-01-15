@@ -363,7 +363,7 @@ make_gridpack () {
 
     for proc in $(ls -d SubProcesses/P*); do
         echo "Moving $proc..."
-        mv proc ../../../
+        mv $proc ../../../
     done
 
     exit 1
