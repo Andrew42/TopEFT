@@ -78,7 +78,8 @@ ctlTi = DegreeOfFreedom(name='ctlTi',relations=[['ctlT1','ctlT2','ctlT3'],1.0])
 all_coeffs = [ctp,cpQM,cpQ3,cpt,cptb,ctW,ctZ,cbW,ctG,cQQ1,cQQ8,cQt1,cQt8,ctt1,cQei,ctli,ctei,cQl3i,cQlMi,ctlSi,ctlTi]
 
 # For submitting many gridpack jobs on cmsconnect
-def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_files=[]):
+def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_files=[],proc_run_wl={}):
+    #NOTE: The proc_run_wl is only use for SLINSPACE mode
     tracker = JobTracker(fdir=os.getcwd())
     max_gen = 5         # Max number of CODEGEN jobs to have running
     max_int = 5         # Max number of INTEGRATE jobs to have running
@@ -115,14 +116,25 @@ def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_
             )
             #TODO: Might not want to split it up like this
             if stype == ScanType.SLINSPACE:
-                submitted += submit_1dim_jobs(
-                    gp=gridpack,
-                    dofs=dofs,
-                    npts=rwgt_pts,
-                    runs=runs,
-                    tag_postfix=tag_postfix,
-                    max_submits=max_submits
-                )
+                if proc_run_wl.has_key(p):
+                    submitted += submit_1dim_jobs(
+                        gp=gridpack,
+                        dofs=dofs,
+                        npts=rwgt_pts,
+                        runs=runs,
+                        tag_postfix=tag_postfix,
+                        max_submits=max_submits,
+                        run_wl=proc_run_wl[p]
+                    )
+                else:
+                    submitted += submit_1dim_jobs(
+                        gp=gridpack,
+                        dofs=dofs,
+                        npts=rwgt_pts,
+                        runs=runs,
+                        tag_postfix=tag_postfix,
+                        max_submits=max_submits
+                    )
             elif stype == ScanType.FRANDOM:
                 start_pts = []
                 for idx in range(runs):
@@ -159,16 +171,17 @@ def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_
     print "IMPORTANT: There could still be (soon to be orphaned) running jobs, make sure to check that they complete properly!"
 
 # Creates 1-D gridpacks at multiple linspaced starting points for each WC specified
-def submit_1dim_jobs(gp,dofs,npts,runs,tag_postfix='',max_submits=-1,run_wl=[]):
+def submit_1dim_jobs(gp,dofs,npts,runs,tag_postfix='',max_submits=-1,run_wl={}):
     submitted = 0
     delay    =  10.0   # Time between successful submits (in seconds)
     low_lim  = -25.0
     high_lim =  25.0
     for dof in dofs:
         dof_subset = [dof]
-        tag = dof.getName() + tag_postfix
+        dof_name = dof.getName()
+        tag = dof_name + tag_postfix
         for idx,start in enumerate(linspace(low_lim,high_lim,runs)):
-            if len(run_wl) > 0 and idx not in run_wl:
+            if run_wl.has_key(dof_name) and idx not in run_wl[dof_name]:
                 continue
             pt = {}
             for dof in dof_subset:
@@ -257,7 +270,7 @@ def main():
     stype = ScanType.NONE
     btype = BatchType.NONE
     tag   = 'ExampleTag'
-    runs  = 1
+    runs  = 7
     npts  = 10
     scan_files = [
         'scanfiles/ttll_16DOldLimitsAxisScan_run0_scanpoints.txt',
@@ -269,6 +282,12 @@ def main():
         ctW,ctp,cpQM,ctZ,ctG,cbW,cpQ3,cptb,cpt,
         cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi
     ]
+
+    proc_run_wl = {}
+
+    sm_pt = {}
+    for dof in dof_list:
+        sm_pt[dof.getName()] = 0.0
 
     if stype == ScanType.SLINSPACE:
         tag = tag + "AxisScan"
@@ -284,7 +303,8 @@ def main():
             rwgt_pts=npts,
             runs=runs,
             stype=stype,
-            scan_files=scan_files)
+            scan_files=scan_files,
+            proc_run_wl=proc_run_wl)
         return
 
     # Generic gridpack production example
@@ -328,7 +348,7 @@ def main():
                 run_wl=[]
             )
         elif stype == ScanType.NONE:
-            gridpack.configure(tag=tag,run=0,dofs=dof_list,num_pts=0)
+            gridpack.configure(tag=tag,run=0,dofs=dof_list,num_pts=0,start_pt={})
             if not gridpack.exists():
                 gridpack.setup()
                 print gridpack.baseSettings(),
