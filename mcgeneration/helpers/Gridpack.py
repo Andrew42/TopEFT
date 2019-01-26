@@ -6,11 +6,13 @@ import random
 from BatchType import BatchType
 from ScanType import ScanType
 from DegreeOfFreedom import DegreeOfFreedom
+#from MGProcess import MGProcess
 from helper_tools import *
 
 # Class for configuring and setting up the submission for a single gridpack, can also run a produced gridpack tarball
 class Gridpack(object):
-    def __init__(self,process,limits_name,proc_card,template_dir,stype=ScanType.NONE,btype=BatchType.NONE):
+    #def __init__(self,process,limits_name,proc_card,template_dir,stype=ScanType.NONE,btype=BatchType.NONE):
+    def __init__(self,process,stype=ScanType.NONE,btype=BatchType.NONE):
         self.HOME_DIR      = os.getcwd()
         self.CARD_DIR      = os.path.join("addons","cards")
         self.LIMITS_DIR    = os.path.join("addons","limits")
@@ -43,25 +45,21 @@ class Gridpack(object):
         # The script that is used to actually run the gridpack production
         self.GENPROD_SCRIPT   = 'gridpack_generation.sh'
 
-        self.SAVE_DIAGRAMS      = False  # Need to modify generate_gridpack.sh if set to true (else gets cleaned up)
-        self.USE_COUPLING_MODEL = False  # Replace the default dim6 model with the 'coupling_orders' version
-        self.COUPLING_STRING    = "DIM6=0" # Only used if self.use_coupling_model is set to true
-
         self.ops = {
             'btype': btype,
             'stype': stype,
-            'process': process,
+            'process': process.getName(),
             'tag': 'Test',
             'run': 0,
             'coeffs': [],
             'start_pt': {},
             'num_rwgt_pts': 0,
-            'limits_name': limits_name,     # The process name as it appears in the limits file
-            'process_card': proc_card,      # The name of the process card to be used (e.g. ttHDecay.dat)
-            'template_dir': template_dir,   # The path (relative to the CARD_DIR) to the dir with the template run and customize cards
-            'save_diagrams': False,         # Runs a modified version of the generation script that exits early to keep feynman diagrams
-            'use_coupling_model': False,    # Use the 'coupling_orders' version of the dim6 model
-            'coupling_string': None,        # If not None replace "DIM6=1" with the specified string in the process card
+            'limits_name': process.getProcess(),        # The process name as it appears in the limits file
+            'process_card': process.getProcesCard(),    # The name of the process card to be used (e.g. ttHDecay.dat)
+            'template_dir': process.getTemplateDir(),   # The path (relative to the CARD_DIR) to the dir with the template run and customize cards
+            'save_diagrams': False,                     # Runs a modified version of the generation script that exits early to keep feynman diagrams
+            'use_coupling_model': False,                # Use the 'coupling_orders' version of the dim6 model
+            'coupling_string': None,                    # If not None replaces "DIM6=1" with the specified string in the process card
         }
 
         self.scan_pts = []

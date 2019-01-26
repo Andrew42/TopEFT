@@ -11,6 +11,7 @@ from helpers.BatchType import BatchType
 from helpers.DegreeOfFreedom import DegreeOfFreedom
 from helpers.JobTracker import JobTracker
 from helpers.Gridpack import Gridpack
+from helpers.MGProcess import MGProcess
 
 #python configure_gridpack.py >& output.log &
 
@@ -52,6 +53,14 @@ PROCESS_MAP = {
         'template_dir': 'template_cards/tHq_template'
     }
 }
+
+ttH      = MGProcess(name='ttH'     ,process='ttH'  ,pcard='ttH.dat'     ,tdir='defaultPDFs_template')
+ttHJet   = MGProcess(name='ttHJet'  ,process='ttH'  ,pcard='ttHJet.dat'  ,tdir='jets_template')
+ttHDecay = MGProcess(name='ttHDecay',process='ttH'  ,pcard='ttHDecay.dat',tdir='defaultPDFs_template')
+ttll     = MGProcess(name='ttll'    ,process='ttll' ,pcard='ttll.dat'    ,tdir='defaultPDFs_template')
+ttlnu    = MGProcess(name='ttlnu'   ,process='ttlnu',pcard='ttlnu.dat'   ,tdir='defaultPDFs_template')
+tllq     = MGProcess(name='tllq'    ,process='tllq' ,pcard='tllq.dat'    ,tdir='defaultPDFs_template')
+tHq      = MGProcess(name='tHq'     ,process='tHq'  ,pcard='tHq.dat'     ,tdir='tHq_template')
 
 ctp   = DegreeOfFreedom(name='ctp'  ,relations=[['ctp'] ,1.0])
 cpQM  = DegreeOfFreedom(name='cpQM' ,relations=[['cpQM'],1.0])
@@ -103,14 +112,19 @@ def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_
             continue
         submitted = 0
         for p in proc_list:
-            if not PROCESS_MAP.has_key(p):
-                print "Missing process in PROCESS_MAP: %s" % (p)
-                continue
+            #if not PROCESS_MAP.has_key(p):
+            #    print "Missing process in PROCESS_MAP: %s" % (p)
+            #    continue
+            #gridpack = Gridpack(
+            #    process=p,
+            #    limits_name=PROCESS_MAP[p]['name'],
+            #    proc_card=PROCESS_MAP[p]['process_card'],
+            #    template_dir=PROCESS_MAP[p]['template_dir'],
+            #    stype=stype,
+            #    btype=BatchType.CMSCONNECT
+            #)
             gridpack = Gridpack(
                 process=p,
-                limits_name=PROCESS_MAP[p]['name'],
-                proc_card=PROCESS_MAP[p]['process_card'],
-                template_dir=PROCESS_MAP[p]['template_dir'],
                 stype=stype,
                 btype=BatchType.CMSCONNECT
             )
@@ -277,9 +291,9 @@ def main():
         'scanfiles/ttll_16DOldLimitsAxisScan_run1_scanpoints.txt',
         'scanfiles/ttll_16DOldLimitsAxisScan_run2_scanpoints.txt',
     ]
-    proc_list = ['ttH']
+    proc_list = [ttH]
     dof_list  = [
-        ctW,ctp,cpQM,ctZ,ctG,cbW,cpQ3,cptb,cpt,
+        ctp,cpQM,ctW,ctZ,ctG,cbW,cpQ3,cptb,cpt,
         cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi
     ]
 
@@ -310,14 +324,20 @@ def main():
     # Generic gridpack production example
     submitted = 0
     for p in proc_list:
-        if not PROCESS_MAP.has_key(p):
-            print "Missing process in PROCESS_MAP: %s" % (p)
-            continue
+        #if not PROCESS_MAP.has_key(p):
+        #    print "Missing process in PROCESS_MAP: %s" % (p)
+        #    continue
+        #gridpack = Gridpack(
+        #    process=p,
+        #    limits_name=PROCESS_MAP[p]['name'],
+        #    proc_card=PROCESS_MAP[p]['process_card'],
+        #    template_dir=PROCESS_MAP[p]['template_dir'],
+        #    stype=stype,
+        #    btype=btype
+        #)
+
         gridpack = Gridpack(
             process=p,
-            limits_name=PROCESS_MAP[p]['name'],
-            proc_card=PROCESS_MAP[p]['process_card'],
-            template_dir=PROCESS_MAP[p]['template_dir'],
             stype=stype,
             btype=btype
         )
