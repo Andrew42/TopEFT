@@ -362,7 +362,7 @@ def main():
             submitted += submit_1dim_jobs(
                 gp=gridpack,
                 dofs=dof_list,
-                npts=rwgt_pts,
+                npts=npts,
                 runs=runs,
                 tag_postfix=tag,
                 max_submits=-1,
