@@ -37,7 +37,7 @@ class JobTracker(object):
 
     def update(self):
         self.last_update = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        self.all = self.getJobs()
+        self.all = self.getJobs()               # A job is a string of the form: p_c_r
         self.running = self.getRunningJobs()
         self.codegen = self.getCodeGenJobs()
         self.intg_full = self.getIntegrateJobs()
@@ -110,6 +110,7 @@ class JobTracker(object):
         finished = []
         for fn in jobs:
             if self.hasTarball(fn,self.fdir):
+                t = self.getTarballTime(fn)
                 finished.append(fn)
         return finished
 
@@ -172,6 +173,14 @@ class JobTracker(object):
             return 0
         p,c,r = fn.split('_')
         fpath = os.path.join(self.fdir,"%s_%s_%s.log" % (p,c,r))
+        return self.getLastModifiedTime(fpath)
+
+    # Returns the time since the tarball file was last updated (relative to now)
+    def getTarballTime(self,fn):
+        if not self.isJob(fn):
+            return 0
+        p,c,r = fn.split('_')
+        fpath = os.path.join(self.fdir,"%s_%s_%s_slc6_amd64_gcc630_CMSSW_9_3_0_tarball.tar.xz" % (p,c,r))
         return self.getLastModifiedTime(fpath)
 
     # Returns the time the job spent in the codegen phase
