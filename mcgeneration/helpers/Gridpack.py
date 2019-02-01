@@ -55,7 +55,7 @@ class Gridpack(object):
             'start_pt': {},
             'num_rwgt_pts': 0,
             'limits_name': process.getProcess(),        # The process name as it appears in the limits file
-            'process_card': process.getProcesCard(),    # The name of the process card to be used (e.g. ttHDecay.dat)
+            'process_card': process.getProcessCard(),    # The name of the process card to be used (e.g. ttHDecay.dat)
             'template_dir': process.getTemplateDir(),   # The path (relative to the CARD_DIR) to the dir with the template run and customize cards
             'save_diagrams': False,                     # Runs a modified version of the generation script that exits early to keep feynman diagrams
             'use_coupling_model': False,                # Use the 'coupling_orders' version of the dim6 model
