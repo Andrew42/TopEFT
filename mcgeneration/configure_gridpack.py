@@ -61,6 +61,7 @@ ttll     = MGProcess(name='ttll'    ,process='ttll' ,pcard='ttll.dat'    ,tdir='
 ttlnu    = MGProcess(name='ttlnu'   ,process='ttlnu',pcard='ttlnu.dat'   ,tdir='defaultPDFs_template')
 tllq     = MGProcess(name='tllq'    ,process='tllq' ,pcard='tllq.dat'    ,tdir='defaultPDFs_template')
 tHq      = MGProcess(name='tHq'     ,process='tHq'  ,pcard='tHq.dat'     ,tdir='tHq_template')
+tHlnu    = MGProcess(name='tHlnu'   ,process='tHlnu',pcard='tHlnu.dat'   ,tdir='centralTHW_template')
 
 ctp   = DegreeOfFreedom(name='ctp'  ,relations=[['ctp'] ,1.0])
 cpQM  = DegreeOfFreedom(name='cpQM' ,relations=[['cpQM'],1.0])
@@ -365,7 +366,7 @@ def main():
                 runs=runs,
                 tag_postfix=tag,
                 max_submits=-1,
-                run_wl=[]
+                run_wl={}
             )
         elif stype == ScanType.NONE:
             gridpack.configure(tag=tag,run=0,dofs=dof_list,num_pts=0,start_pt={})
