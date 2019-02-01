@@ -16,14 +16,15 @@ from helpers.MGProcess import MGProcess
 #python configure_gridpack.py >& output.log &
 
 #NOTE: The template directory should contain run_card.dat and customizecards.dat files
-ttH      = MGProcess(name='ttH'     ,process='ttH'  ,pcard='ttH.dat'     ,tdir='defaultPDFs_template')
-ttHJet   = MGProcess(name='ttHJet'  ,process='ttH'  ,pcard='ttHJet.dat'  ,tdir='jets_template')
-ttHDecay = MGProcess(name='ttHDecay',process='ttH'  ,pcard='ttHDecay.dat',tdir='defaultPDFs_template')
-ttll     = MGProcess(name='ttll'    ,process='ttll' ,pcard='ttll.dat'    ,tdir='defaultPDFs_template')
-ttlnu    = MGProcess(name='ttlnu'   ,process='ttlnu',pcard='ttlnu.dat'   ,tdir='defaultPDFs_template')
-tllq     = MGProcess(name='tllq'    ,process='tllq' ,pcard='tllq.dat'    ,tdir='defaultPDFs_template')
-tHq      = MGProcess(name='tHq'     ,process='tHq'  ,pcard='tHq.dat'     ,tdir='tHq_template')
-tHlnu    = MGProcess(name='tHlnu'   ,process='tHlnu',pcard='tHlnu.dat'   ,tdir='centralTHW_template')
+ttH      = MGProcess(name='ttH'     ,process='ttH'   ,pcard='ttH.dat'     ,tdir='defaultPDFs_template')
+ttHJet   = MGProcess(name='ttHJet'  ,process='ttH'   ,pcard='ttHJet.dat'  ,tdir='jets_template')
+ttHDecay = MGProcess(name='ttHDecay',process='ttH'   ,pcard='ttHDecay.dat',tdir='defaultPDFs_template')
+ttll     = MGProcess(name='ttll'    ,process='ttll'  ,pcard='ttll.dat'    ,tdir='defaultPDFs_template')
+ttlnu    = MGProcess(name='ttlnu'   ,process='ttlnu' ,pcard='ttlnu.dat'   ,tdir='defaultPDFs_template')
+tllq     = MGProcess(name='tllq'    ,process='tllq'  ,pcard='tllq.dat'    ,tdir='defaultPDFs_template')
+tHq      = MGProcess(name='tHq'     ,process='tHq'   ,pcard='tHq.dat'     ,tdir='tHq_template')
+tHlnu    = MGProcess(name='tHlnu'   ,process='tHlnu' ,pcard='tHlnu.dat'   ,tdir='centralTHW_template')
+ttWlnu   = MGProcess(name='ttWlnu'  ,process='ttWlnu',pcard='ttWlnu.dat'  ,tdir='centralTTWW_template')
 
 ctp   = DegreeOfFreedom(name='ctp'  ,relations=[['ctp'] ,1.0])
 cpQM  = DegreeOfFreedom(name='cpQM' ,relations=[['cpQM'],1.0])
