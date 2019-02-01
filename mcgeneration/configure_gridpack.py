@@ -16,44 +16,6 @@ from helpers.MGProcess import MGProcess
 #python configure_gridpack.py >& output.log &
 
 #NOTE: The template directory should contain run_card.dat and customizecards.dat files
-PROCESS_MAP = {
-    'ttH': {
-        'name': 'ttH',
-        'process_card': 'ttH.dat',
-        'template_dir': 'template_cards/defaultPDFs_template'
-    },
-    'ttll': {
-        'name': 'ttll',
-        'process_card': 'ttll.dat',
-        'template_dir': 'template_cards/centralTTZ_template'
-    },
-    'ttlnu': {
-        'name': 'ttlnu',
-        'process_card': 'ttlnu.dat',
-        'template_dir': 'template_cards/defaultPDFs_template'
-    },
-    'tllq': {
-        'name': 'tllq',
-        'process_card': 'tllq.dat',
-        'template_dir': 'template_cards/defaultPDFs_template'
-    },
-    'ttHJet': {
-        'name': 'ttH',
-        'process_card': 'ttHJet.dat',
-        'template_dir': 'template_cards/jets_template'
-    },
-    'ttHDecay': {
-        'name': 'ttH',
-        'process_card': 'ttHDecay.dat',
-        'template_dir': 'template_cards/defaultPDFs_template'
-    },
-    'tHq': {
-        'name': 'tHq',
-        'process_card': 'tHq.dat',
-        'template_dir': 'template_cards/tHq_template'
-    }
-}
-
 ttH      = MGProcess(name='ttH'     ,process='ttH'  ,pcard='ttH.dat'     ,tdir='defaultPDFs_template')
 ttHJet   = MGProcess(name='ttHJet'  ,process='ttH'  ,pcard='ttHJet.dat'  ,tdir='jets_template')
 ttHDecay = MGProcess(name='ttHDecay',process='ttH'  ,pcard='ttHDecay.dat',tdir='defaultPDFs_template')
@@ -113,17 +75,6 @@ def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_
             continue
         submitted = 0
         for p in proc_list:
-            #if not PROCESS_MAP.has_key(p):
-            #    print "Missing process in PROCESS_MAP: %s" % (p)
-            #    continue
-            #gridpack = Gridpack(
-            #    process=p,
-            #    limits_name=PROCESS_MAP[p]['name'],
-            #    proc_card=PROCESS_MAP[p]['process_card'],
-            #    template_dir=PROCESS_MAP[p]['template_dir'],
-            #    stype=stype,
-            #    btype=BatchType.CMSCONNECT
-            #)
             gridpack = Gridpack(
                 process=p,
                 stype=stype,
@@ -325,18 +276,6 @@ def main():
     # Generic gridpack production example
     submitted = 0
     for p in proc_list:
-        #if not PROCESS_MAP.has_key(p):
-        #    print "Missing process in PROCESS_MAP: %s" % (p)
-        #    continue
-        #gridpack = Gridpack(
-        #    process=p,
-        #    limits_name=PROCESS_MAP[p]['name'],
-        #    proc_card=PROCESS_MAP[p]['process_card'],
-        #    template_dir=PROCESS_MAP[p]['template_dir'],
-        #    stype=stype,
-        #    btype=btype
-        #)
-
         gridpack = Gridpack(
             process=p,
             stype=stype,

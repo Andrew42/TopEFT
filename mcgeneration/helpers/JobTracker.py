@@ -30,7 +30,7 @@ class JobTracker(object):
         #return (h.rjust(2,"0"),m.rjust(2,"0"),s.rjust(2,"0"))
 
     def __init__(self,fdir='.'):
-        self.fdir = fdir
+        self.fdir = fdir        # Where to look for output files
         self.intg_cutoff = -1
         self.stuck_cutoff = -1
         self.update()
@@ -52,7 +52,6 @@ class JobTracker(object):
         self.stuck_cutoff = v
 
     # Return a list of scanpoint files in the target directory
-    # TODO: Remove fdir as input to this function (use self.fdir instead!)
     def getScanpointFiles(self,fdir='.'):
         fnames = []
         for fn in os.listdir(fdir):
@@ -65,7 +64,6 @@ class JobTracker(object):
         return fnames
 
     # Check if the job has produced a tarball
-    # TODO: Remove fdir as input to this function (use self.fdir instead!)
     def hasTarball(self,chk_file,fdir='.'):
         arr = chk_file.split('_')
         p,c,r = arr[:3]
@@ -73,7 +71,6 @@ class JobTracker(object):
         return os.path.exists(fpath)
 
     # Check if the job is still in the code gen phase
-    # TODO: Remove fdir as input to this function (use self.fdir instead!)
     def isCodeGen(self,chk_file,fdir='.'):
         arr = chk_file.split('_')
         p,c,r = arr[:3]
