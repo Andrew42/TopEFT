@@ -83,7 +83,7 @@ def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_
             )
             #TODO: Might not want to split it up like this
             if stype == ScanType.SLINSPACE:
-                if proc_run_wl.has_key(p):
+                if proc_run_wl.has_key(p.getName()):
                     submitted += submit_1dim_jobs(
                         gp=gridpack,
                         dofs=dofs,
@@ -91,7 +91,7 @@ def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_
                         runs=runs,
                         tag_postfix=tag_postfix,
                         max_submits=max_submits,
-                        run_wl=proc_run_wl[p]
+                        run_wl=proc_run_wl[p.getName()]
                     )
                 else:
                     submitted += submit_1dim_jobs(
