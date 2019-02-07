@@ -25,6 +25,7 @@ tllq     = MGProcess(name='tllq'    ,process='tllq'  ,pcard='tllq.dat'    ,tdir=
 tHq      = MGProcess(name='tHq'     ,process='tHq'   ,pcard='tHq.dat'     ,tdir='tHq_template')
 tHlnu    = MGProcess(name='tHlnu'   ,process='tHlnu' ,pcard='tHlnu.dat'   ,tdir='centralTHW_template')
 ttWlnu   = MGProcess(name='ttWlnu'  ,process='ttWlnu',pcard='ttWlnu.dat'  ,tdir='centralTTWW_template')
+tttt     = MGProcess(name='tttt'    ,process='tttt'  ,pcard='tttt.dat'    ,tdir='defaultPDFs_template')
 
 ctp   = DegreeOfFreedom(name='ctp'  ,relations=[['ctp'] ,1.0])
 cpQM  = DegreeOfFreedom(name='cpQM' ,relations=[['cpQM'],1.0])
@@ -237,7 +238,7 @@ def main():
     stype = ScanType.NONE
     btype = BatchType.NONE
     tag   = 'ExampleTag'
-    runs  = 7
+    runs  = 7               # if set to 0, will only make a single gridpack
     npts  = 10
     scan_files = [
         'scanfiles/ttll_16DOldLimitsAxisScan_run0_scanpoints.txt',
@@ -251,6 +252,7 @@ def main():
     ]
 
     proc_run_wl = {}
+    start_pt = {}
 
     sm_pt = {}
     for dof in dof_list:
@@ -288,7 +290,8 @@ def main():
         #gridpack.ops['use_coupling_model'] = True
         #gridpack.ops['coupling_string'] = "FCNC=0 DIM6^2==1 DIM6_ctZ^2==1 DIM6_ctW^2==1"
 
-        if stype == ScanType.FRANDOM:
+        # If runs == 0, we probably are trying to make specific types of gridpacks by hand
+        if stype == ScanType.FRANDOM and runs:
             submitted += submit_ndim_jobs(
                 gp=gridpack,
                 dofs=dof_list,
@@ -298,7 +301,7 @@ def main():
                 start_pts=[],
                 max_submits=-1
             )
-        elif stype == ScanType.SLINSPACE:
+        elif stype == ScanType.SLINSPACE and runs:
             submitted += submit_1dim_jobs(
                 gp=gridpack,
                 dofs=dof_list,
@@ -308,8 +311,8 @@ def main():
                 max_submits=-1,
                 run_wl={}
             )
-        elif stype == ScanType.NONE:
-            gridpack.configure(tag=tag,run=0,dofs=dof_list,num_pts=0,start_pt={})
+        else:
+            gridpack.configure(tag=tag,run=0,dofs=dof_list,num_pts=npts,start_pt=start_pt)
             if not gridpack.exists():
                 gridpack.setup()
                 print gridpack.baseSettings(),
@@ -317,8 +320,6 @@ def main():
                 print ""
             else:
                 print "Skipping gridpack: %s" % (gridpack.getSetupString())
-        else:
-            print "Invalid ScanType: %s" % (stype)
 
 if __name__ == "__main__":
     main()
