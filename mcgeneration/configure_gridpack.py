@@ -192,8 +192,8 @@ def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_
 def submit_1dim_jobs(gp,dofs,npts,runs,tag_postfix='',max_submits=-1,run_wl={}):
     submitted = 0
     delay    =  10.0   # Time between successful submits (in seconds)
-    def_low  = -25.0
-    def_high =  25.0
+    def_low  = -20.0
+    def_high =  20.0
     wc_limits = parse_limit_file(os.path.join("addons/limits","dim6top_LO_UFO_limits.txt"))
     for dof in dofs:
         dof_subset = [dof]
