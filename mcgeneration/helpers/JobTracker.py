@@ -303,3 +303,9 @@ if __name__ == "__main__":
     job_list = [JobTracker.RUNNING,JobTracker.CODEGEN,JobTracker.INTEGRATE,JobTracker.INTEGRATE_FILTER,JobTracker.STUCK]
     tracker.showJobs(wl=job_list)
     tracker.checkProgress(lines=5)
+    print "\nChecking finished jobs for failures:"
+    for job in tracker.finished:
+        if tracker.logHasError(job=job,fdir=curr_dir):
+            print "\tFinished Job %s has error!" % (job)
+        if not tracker.logHasXsec(job=job,fdir=curr_dir):
+            print "\tFinished Job %s is missing xsec!" % (job)
