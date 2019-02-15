@@ -2,17 +2,28 @@ import itertools
 import random
 import subprocess
 import shutil
+import re
 
 # Pipes subprocess messages to STDOUT
-def run_process(inputs):
+def run_process(inputs,verbose=True,indent=0):
+    # Note: This will hold the main thread and wait for the subprocess to complete
+    indent_str = "\t"*indent
     p = subprocess.Popen(inputs,stdout=subprocess.PIPE)
+    stdout = []
     while True:
         l = p.stdout.readline()
         if l == '' and p.poll() is not None:
             break
         if l:
-            print l.strip()
-    return
+            stdout.append(l.strip())
+            if verbose: print indent_str+l.strip()
+    return stdout
+
+def find_process(p_name,p_lst):
+    for p in p_lst:
+        if p.getName() == p_name:
+            return p
+    return None
 
 # Returns a list of linear spaced numbers (implementation of numpy.linspace)
 def linspace(start,stop,num,endpoint=True,acc=7):
@@ -156,6 +167,21 @@ def save_scan_points(fpath,dofs,rwgt_pts):
                 else:
                     row += str(pt[dof.getName()]).ljust(col_spacing) + col_sep
             f.write(row)
+
+# Match strings using one or more regular expressions
+def regex_match(lst,regex_lst):
+    # NOTE: We don't escape any of the regex special characters!
+    # TODO: Add whitelist/blacklist option switch
+    matches = []
+    if len(regex_lst) == 0:
+        return lst[:]
+    for s in lst:
+        for pat in regex_lst:
+            m = re.search(r"%s" % (pat),s)
+            if m is not None:
+                matches.append(s)
+                break
+    return matches
 
 if __name__ == "__main__":
     pass

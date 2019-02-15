@@ -33,23 +33,30 @@ class JobTracker(object):
         self.fdir = fdir        # Where to look for output files
         self.intg_cutoff = -1
         self.stuck_cutoff = -1
+        self.tarball_cutoff = -1    # Large value requires the tarball to go longer periods without being modified
         self.update()
 
     def update(self):
         self.last_update = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         self.all = self.getJobs()               # A job is a string of the form: p_c_r
-        self.running = self.getRunningJobs()
+        self.running = self.getRunningJobs(self.tarball_cutoff)
         self.codegen = self.getCodeGenJobs()
         self.intg_full = self.getIntegrateJobs()
         self.intg_filter = self.getIntegrateJobs(self.intg_cutoff)
         self.stuck = self.getStuckJobs(self.stuck_cutoff)
-        self.finished = self.getFinishedJobs()
+        self.finished = self.getFinishedJobs(self.tarball_cutoff)
+
+    def setDirectory(self,fdir):
+        self.fdir = fdr
 
     def setIntegrateCutoff(self,v):
         self.intg_cutoff = v
 
     def setStuckCutoff(self,v):
         self.stuck_cutoff = v
+
+    def setTarballCutoff(self,v):
+        self.tarball_cutoff = v
 
     # Return a list of scanpoint files in the target directory
     def getScanpointFiles(self,fdir='.'):
@@ -69,6 +76,24 @@ class JobTracker(object):
         p,c,r = arr[:3]
         fpath = os.path.join(fdir,"%s_%s_%s_slc6_amd64_gcc630_CMSSW_9_3_0_tarball.tar.xz" % (p,c,r))
         return os.path.exists(fpath)
+
+    # Check if the job's .log file contains an error line
+    def hasError(self,job,fdir='.'):
+        # NOTE: Make sure to check that the job exists before calling this fcn
+        if not self.isJob(job):
+            return False
+        fn = os.path.join(fdir,job + '.log')
+        rgx = 'Error when reading.*'
+        ret = run_process(['grep','-l','-e',rgx,fn],verbose=False)
+        return bool(ret)
+
+    # Check if the job's .log file contains a xsec line
+    def hasXsec(self,job,fdir='.'):
+        # NOTE: Make sure to check that the job exists before calling this fcn
+        fn = os.path.join(fdir,job + '.log')
+        rgx = 'Cross-section : '
+        ret = run_process(['grep','-l','-e',rgx,fn],verbose=False)
+        return bool(ret)
 
     # Check if the job is still in the code gen phase
     def isCodeGen(self,chk_file,fdir='.'):
@@ -105,22 +130,32 @@ class JobTracker(object):
         return jobs
 
     # Returns a list of all jobs which have produced a tarball
-    def getFinishedJobs(self):
+    def getFinishedJobs(self,cutoff=-1):
         jobs = self.getJobs()
         finished = []
         for fn in jobs:
             if self.hasTarball(fn,self.fdir):
                 t = self.getTarballTime(fn)
+                if cutoff > -1 and t < cutoff:
+                    # The tarball is still being made
+                    continue
                 finished.append(fn)
         return finished
 
     # Returns a list of all jobs which have not yet produced a tarball
-    def getRunningJobs(self):
+    def getRunningJobs(self,cutoff=-1):
         jobs = self.getJobs()
         running = []
         for fn in jobs:
             if self.hasTarball(fn,self.fdir):
-                continue
+                if cutoff > -1:
+                    t = self.getTarballTime(fn)
+                    if t > cutoff:
+                        # The tarball has finished being made
+                        continue
+                else:
+                    # Assume the job has finished as soon as the tarball gets made
+                    continue
             running.append(fn)
         return running
 
@@ -258,10 +293,12 @@ class JobTracker(object):
 if __name__ == "__main__":
     curr_dir = os.getcwd()
     tracker = JobTracker(fdir=curr_dir)
-    t_cutoff = 30*60
-    s_cutoff = 30*60
-    tracker.setIntegrateCutoff(t_cutoff)
-    tracker.setStuckCutoff(s_cutoff)
+    int_cutoff = 30*60
+    stk_cutoff = 30*60
+    tar_cutoff = 5*60
+    tracker.setIntegrateCutoff(int_cutoff)
+    tracker.setStuckCutoff(stk_cutoff)
+    tracker.setTarballCutoff(tar_cutoff)
     tracker.update()
     job_list = [JobTracker.RUNNING,JobTracker.CODEGEN,JobTracker.INTEGRATE,JobTracker.INTEGRATE_FILTER,JobTracker.STUCK]
     tracker.showJobs(wl=job_list)

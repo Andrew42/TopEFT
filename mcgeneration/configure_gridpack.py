@@ -5,7 +5,7 @@ import itertools
 import random
 import time
 
-from helpers.helper_tools import linspace
+from helpers.helper_tools import linspace, parse_limit_file, find_process
 from helpers.ScanType import ScanType
 from helpers.BatchType import BatchType
 from helpers.DegreeOfFreedom import DegreeOfFreedom
@@ -13,6 +13,7 @@ from helpers.JobTracker import JobTracker
 from helpers.Gridpack import Gridpack
 from helpers.MGProcess import MGProcess
 
+#voms-proxy-init -voms cms -valid 192:00
 #python configure_gridpack.py >& output.log &
 
 #NOTE: The template directory should contain run_card.dat and customizecards.dat files
@@ -22,6 +23,7 @@ ttHDecay = MGProcess(name='ttHDecay',process='ttH'   ,pcard='ttHDecay.dat',tdir=
 ttll     = MGProcess(name='ttll'    ,process='ttll'  ,pcard='ttll.dat'    ,tdir='defaultPDFs_template')
 ttlnu    = MGProcess(name='ttlnu'   ,process='ttlnu' ,pcard='ttlnu.dat'   ,tdir='defaultPDFs_template')
 tllq     = MGProcess(name='tllq'    ,process='tllq'  ,pcard='tllq.dat'    ,tdir='defaultPDFs_template')
+ttbar    = MGProcess(name='ttbar'   ,process='ttbar' ,pcard='ttbar.dat'   ,tdir='defaultPDFs_template')
 tHq      = MGProcess(name='tHq'     ,process='tHq'   ,pcard='tHq.dat'     ,tdir='tHq_template')
 tHlnu    = MGProcess(name='tHlnu'   ,process='tHlnu' ,pcard='tHlnu.dat'   ,tdir='centralTHW_template')
 ttWlnu   = MGProcess(name='ttWlnu'  ,process='ttWlnu',pcard='ttWlnu.dat'  ,tdir='centralTTWW_template')
@@ -36,11 +38,6 @@ ctW   = DegreeOfFreedom(name='ctW'  ,relations=[['ctW'] ,1.0])
 ctZ   = DegreeOfFreedom(name='ctZ'  ,relations=[['ctZ'] ,1.0])
 cbW   = DegreeOfFreedom(name='cbW'  ,relations=[['cbW'] ,1.0])
 ctG   = DegreeOfFreedom(name='ctG'  ,relations=[['ctG'] ,1.0])
-cQQ1  = DegreeOfFreedom(name='cQQ1' ,relations=[['cQQ1'],1.0])
-cQQ8  = DegreeOfFreedom(name='cQQ8' ,relations=[['cQQ8'],1.0])
-cQt1  = DegreeOfFreedom(name='cQt1' ,relations=[['cQt1'],1.0])
-cQt8  = DegreeOfFreedom(name='cQt8' ,relations=[['cQt8'],1.0])
-ctt1  = DegreeOfFreedom(name='ctt1' ,relations=[['ctt1'],1.0])
 cQei  = DegreeOfFreedom(name='cQei' ,relations=[['cQe1','cQe2','cQe3'],1.0])
 ctli  = DegreeOfFreedom(name='ctli' ,relations=[['ctl1','ctl2','ctl3'],1.0])
 ctei  = DegreeOfFreedom(name='ctei' ,relations=[['cte1','cte2','cte3'],1.0])
@@ -49,18 +46,51 @@ cQlMi = DegreeOfFreedom(name='cQlMi',relations=[['cQlM1','cQlM2','cQlM3'],1.0])
 ctlSi = DegreeOfFreedom(name='ctlSi',relations=[['ctlS1','ctlS2','ctlS3'],1.0])
 ctlTi = DegreeOfFreedom(name='ctlTi',relations=[['ctlT1','ctlT2','ctlT3'],1.0])
 
-all_coeffs = [ctp,cpQM,cpQ3,cpt,cptb,ctW,ctZ,cbW,ctG,cQQ1,cQQ8,cQt1,cQt8,ctt1,cQei,ctli,ctei,cQl3i,cQlMi,ctlSi,ctlTi]
+# Four heavy quarks
+cQQ1   = DegreeOfFreedom(name='cQQ1'   ,relations=[['cQQ1'],1.0])
+cQQ8   = DegreeOfFreedom(name='cQQ8'   ,relations=[['cQQ8'],1.0])
+cQt1   = DegreeOfFreedom(name='cQt1'   ,relations=[['cQt1'],1.0])
+cQt8   = DegreeOfFreedom(name='cQt8'   ,relations=[['cQt8'],1.0])
+cQb1   = DegreeOfFreedom(name='cQb1'   ,relations=[['cQb1'],1.0])
+cQb8   = DegreeOfFreedom(name='cQb8'   ,relations=[['cQb8'],1.0])
+ctt1   = DegreeOfFreedom(name='ctt1'   ,relations=[['ctt1'],1.0])
+ctb1   = DegreeOfFreedom(name='ctb1'   ,relations=[['ctb1'],1.0])
+cQtQb1 = DegreeOfFreedom(name='cQtQb1' ,relations=[['cQtQb1'],1.0])
+cQtQb8 = DegreeOfFreedom(name='cQtQb8' ,relations=[['cQtQb8'],1.0])
+
+# Two-heavy-two-light quarks
+cQq13 = DegreeOfFreedom(name='cQq13' ,relations=[['cQq13'],1.0])
+cQq83 = DegreeOfFreedom(name='cQq83' ,relations=[['cQq83'],1.0])
+cQq11 = DegreeOfFreedom(name='cQq11' ,relations=[['cQq11'],1.0])
+cQq81 = DegreeOfFreedom(name='cQq81' ,relations=[['cQq81'],1.0])
+cQu1  = DegreeOfFreedom(name='cQu1'  ,relations=[['cQu1'],1.0])
+cQu8  = DegreeOfFreedom(name='cQu8'  ,relations=[['cQu8'],1.0])
+cQd1  = DegreeOfFreedom(name='cQd1'  ,relations=[['cQd1'],1.0])
+cQd8  = DegreeOfFreedom(name='cQd8'  ,relations=[['cQd8'],1.0])
+ctq1  = DegreeOfFreedom(name='ctq1'  ,relations=[['ctq1'],1.0])
+ctq8  = DegreeOfFreedom(name='ctq8'  ,relations=[['ctq8'],1.0])
+ctu1  = DegreeOfFreedom(name='ctu1'  ,relations=[['ctu1'],1.0])
+ctu8  = DegreeOfFreedom(name='ctu8'  ,relations=[['ctu8'],1.0])
+ctd1  = DegreeOfFreedom(name='ctd1'  ,relations=[['ctd1'],1.0])
+ctd8  = DegreeOfFreedom(name='ctd8'  ,relations=[['ctd8'],1.0])
+
+all_coeffs       = [ctp,cpQM,cpQ3,cpt,cptb,ctW,ctZ,cbW,ctG,cQQ1,cQQ8,cQt1,cQt8,ctt1,cQei,ctli,ctei,cQl3i,cQlMi,ctlSi,ctlTi]
+ana_coeffs       = [ctp,cpQM,ctW,ctZ,ctG,cbW,cpQ3,cptb,cpt,cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi]  # 16 operators
+coeffs_4Hvy      = [cQQ1,cQQ8,cQt1,cQt8,ctt1,ctb1,cQtQb1,cQtQb8]    # 8 operators
+coeffs_2Hvy_2Lgt = [cQq13,cQq83,cQq11,cQq81,cQu1,cQu8,cQd1,cQd8,ctq1,ctq8,ctu1,ctu8,ctd1,ctd8]  # 14 operators
 
 # For submitting many gridpack jobs on cmsconnect
 def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_files=[],proc_run_wl={}):
     #NOTE: The proc_run_wl is only use for SLINSPACE mode
     tracker = JobTracker(fdir=os.getcwd())
     max_gen = 5         # Max number of CODEGEN jobs to have running
-    max_int = 5         # Max number of INTEGRATE jobs to have running
+    max_int = 7         # Max number of INTEGRATE jobs to have running
     max_run = 50        # Max number of total jobs running
     int_cut = 45*60     # Time (relative to INTEGRATE step) before additional jobs can get submitted
+    tar_cut = 3*60      # Time the tarball needs to go without being modified to qualify as complete
     delay = 5.0*60      # Time between checks
     tracker.setIntegrateCutoff(int_cut)
+    tracker.setTarballCutoff(tar_cut)
     done = False
     while not done:
         tracker.update()
@@ -75,6 +105,23 @@ def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_
         if max_submits <= 0 or done:
             time.sleep(delay)
             continue
+
+        for job in tracker.finished:
+            if tracker.getTarballTime(job) > 3*(tar_cut+delay):
+                # Skip checking jobs that finished sufficiently long ago
+                continue
+            p,c,r = job.split('_')
+            p_obj = find_process(p,proc_list)
+            if p_obj is None:
+                continue 
+            tmp_gp = Gridpack(process=p_obj)
+            tmp_gp.ops['tag'] = c
+            tmp_gp.ops['run'] = int(r[3:])  # Need to get the integer value from the run string
+            if not tmp_gp.exists():
+                continue
+            if tracker.logHasError(job=job,fdir='.') or not tracker.logHasXsec(job=job,fdir='.'):
+                tmp_gp.clean()
+
         submitted = 0
         for p in proc_list:
             gridpack = Gridpack(
@@ -132,22 +179,32 @@ def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_
             if submitted >= max_submits:
                 break
         print ""
-        if not submitted:
-            # Nothing left to submit --> There could still be jobs running (which will be orphaned and complete on their own)
+        if not submitted and len(tracker.running) == 0:
+            # Nothing left to submit and all jobs have finished running
+            # Note: This means that a kill command sent to the parent process should now kill all still running jobs
             done = True
     print "Done submitting jobs!"
-    print "IMPORTANT: There could still be (soon to be orphaned) running jobs, make sure to check that they complete properly!"
+    print "IMPORTANT: Make sure to check the condor_q for any held jobs!"
+    #print "IMPORTANT: There could still be (soon to be orphaned) running jobs, make sure to check that they complete properly!"
 
 # Creates 1-D gridpacks at multiple linspaced starting points for each WC specified
 def submit_1dim_jobs(gp,dofs,npts,runs,tag_postfix='',max_submits=-1,run_wl={}):
     submitted = 0
     delay    =  10.0   # Time between successful submits (in seconds)
-    low_lim  = -25.0
-    high_lim =  25.0
+    def_low  = -25.0
+    def_high =  25.0
+    wc_limits = parse_limit_file(os.path.join("addons/limits","dim6top_LO_UFO_limits.txt"))
     for dof in dofs:
         dof_subset = [dof]
         dof_name = dof.getName()
+        lim_key = gp.ops['process'] + '_' + dof_name
         tag = dof_name + tag_postfix
+        if wc_limits.has_key(lim_key):
+            low_lim  = round(wc_limits[lim_key][0],6)
+            high_lim = round(wc_limits[lim_key][1],6)
+        else:
+            low_lim  = def_low
+            high_lim = def_high
         for idx,start in enumerate(linspace(low_lim,high_lim,runs)):
             if run_wl.has_key(dof_name) and idx not in run_wl[dof_name]:
                 continue
@@ -251,7 +308,7 @@ def main():
         cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi
     ]
 
-    proc_run_wl = {}
+    proc_run_wl = {}    # {proc_name: {dof_name: [runs] } }
     start_pt = {}
 
     sm_pt = {}

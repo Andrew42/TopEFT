@@ -1,5 +1,6 @@
 import os
 import subprocess
+from helpers.helper_tools import regex_match,run_process
 
 #NOTE: This is meant to transfer two files in the format: p_c_r_scanpoints.txt and p_c_r_*_tarball.tar.xz
 
@@ -7,6 +8,8 @@ import subprocess
 
 MAX_TRANSFERS = 999  # Limit the number of transfers per code running
 def main():
+    dry_run = True
+
     good_fname = 'good_copies.log'
     bad_fname = 'failed_copies.log'
 
@@ -20,11 +23,11 @@ def main():
     indent_lvl = 1
     indent = "\t"*indent_lvl
 
-    process_whitelist = []
-    coeff_whitelist   = []
-    run_whitelist     = []
+    p_wl = []
+    c_wl = []
+    r_wl = []
 
-    transfer_files = getFilesToTransfer('.',process_whitelist,coeff_whitelist,run_whitelist)
+    transfer_files = getFilesToTransfer('.',p_wl=p_wl,c_wl=c_wl,r_wl=r_wl)
     for idx,fn in enumerate(transfer_files):
         if idx > MAX_TRANSFERS:
             break
@@ -38,8 +41,13 @@ def main():
         
         local_sz      = getFileSize(fn)
         local_chksum  = getCheckSum(fn)
-        remote_sz     = getFileSize(remote_fn)
-        remote_chksum = getCheckSum(remote_fn) if remote_sz != -1 else -1
+
+        if not dry_run:
+            remote_sz     = getFileSize(remote_fn)
+            remote_chksum = getCheckSum(remote_fn) if remote_sz != -1 else -1
+        else:
+            remote_sz = -1
+            remote_chksum = -1
 
         if remote_chksum == local_chksum:
             # The file is already present and has correct checksum
@@ -50,13 +58,16 @@ def main():
         print "%sTarget: %s" % (indent,remote_fn)
         print "%sSize: %.2f MB" % (indent,float(local_sz)/(1024*1024))
 
-        try:
-            stdout_arr = run_process(['gfal-copy','-fp',fn,remote_fn],indent=1)
-            copied_chksum = getCheckSum(remote_fn)
-        except KeyboardInterrupt:
-            print "Ending early!"
-            failed_copies.append(fn)
-            break
+        if not dry_run:
+            try:
+                stdout_arr = run_process(['gfal-copy','-fp',fn,remote_fn],indent=1)
+                copied_chksum = getCheckSum(remote_fn)
+            except KeyboardInterrupt:
+                print "Ending early!"
+                failed_copies.append(fn)
+                break
+        else:
+            copied_chksum = -1
 
         if copied_chksum != local_chksum:
             print "%sResult: FAILED" % (indent)
@@ -81,11 +92,11 @@ def main():
 
 # Get a list of all (local) files to transfer
 def getFilesToTransfer(fdir='.',p_wl=[],c_wl=[],r_wl=[]):
-    search_strs = ['_tarball.tar.xz','_scanpoints.txt']
+    search_strs = ['*._tarball.tar.xz','*._scanpoints.txt']
     files = []
     arr = getLocalFiles(fdir)
     for idx,f in enumerate(arr):
-        if not isValidOr(f,search_strs):
+        if len(regex_match([f],search_strs)) == 0:
             # The file does not contain any of the search strings
             continue
         arr = f.split('_')
@@ -93,11 +104,11 @@ def getFilesToTransfer(fdir='.',p_wl=[],c_wl=[],r_wl=[]):
             continue
         p,c,r = arr[:3]
 
-        if len(p_wl) > 0 and not p in p_wl:
+        if len(regex_match([p],p_wl)) == 0:
             continue
-        elif len(c_wl) > 0 and not c in c_wl:
+        elif len(regex_match([c],c_wl)) == 0:
             continue
-        elif len(r_wl) > 0 and not r in r_wl:
+        elif len(regex_match([r],r_wl)) == 0:
             continue
 
         cross_checks = [
@@ -128,13 +139,6 @@ def getRemoteFiles(fdir):
 
     return files
 
-# fname must satisfy at least one of the search strings
-def isValidOr(fname,search_strs):
-    for s in search_strs:
-        if s in fname:
-            return True
-    return False
-
 # Returns the target file size using gfal-stat
 def getFileSize(f):
     arr = run_process(['gfal-stat',f],verbose=False)
@@ -153,18 +157,20 @@ def getCheckSum(f):
         return -1
     return arr[0].split()[1]
 
-def run_process(inputs,verbose=True,indent=0):
-    indent_str = "\t"*indent
-    p = subprocess.Popen(inputs,stdout=subprocess.PIPE)
-    stdout = []
-    while True:
-        l = p.stdout.readline()
-        if l == '' and p.poll() is not None:
-            break
-        if l:
-            stdout.append(l.strip())
-            if verbose: print indent_str+l.strip()
-    return stdout
+#def run_process(inputs,verbose=True,indent=0):
+#    indent_str = "\t"*indent
+#    if verbose:
+#        print indent_str+"Command: "+" ".join(inputs)
+#    p = subprocess.Popen(inputs,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+#    stdout = []
+#    while True:
+#        l = p.stdout.readline()
+#        if l == '' and p.poll() is not None:
+#            break
+#        if l:
+#            stdout.append(l.strip())
+#            if verbose: print indent_str+l.strip()
+#    return stdout
 
 
 if __name__ == "__main__":
