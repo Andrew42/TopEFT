@@ -87,7 +87,7 @@ def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_
     max_int = 7         # Max number of INTEGRATE jobs to have running
     max_run = 50        # Max number of total jobs running
     int_cut = 45*60     # Time (relative to INTEGRATE step) before additional jobs can get submitted
-    tar_cut = 3*60      # Time the tarball needs to go without being modified to qualify as complete
+    tar_cut = 5*60      # Time the tarball needs to go without being modified to qualify as complete
     delay = 5.0*60      # Time between checks
     tracker.setIntegrateCutoff(int_cut)
     tracker.setTarballCutoff(tar_cut)
@@ -119,6 +119,7 @@ def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_
             tmp_gp.ops['run'] = int(r[3:])  # Need to get the integer value from the run string
             if not tmp_gp.exists():
                 continue
+            tmp_gp.is_configured = True
             if tracker.logHasError(job=job,fdir='.') or not tracker.logHasXsec(job=job,fdir='.'):
                 tmp_gp.clean()
 
@@ -181,7 +182,7 @@ def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_
         print ""
         if not submitted and len(tracker.running) == 0:
             # Nothing left to submit and all jobs have finished running
-            # Note: This means that a kill command sent to the parent process should now kill all still running jobs
+            # Note: A kill command sent to the parent still wont kill the children processes
             done = True
     print "Done submitting jobs!"
     print "IMPORTANT: Make sure to check the condor_q for any held jobs!"

@@ -94,7 +94,7 @@ if __name__ == "__main__":
     cQDB = DegreeOfFreedom(name='cQDB')
     cQDB.setCoefficient(['cQq11'],6.0)
     cQDB.setCoefficient(['cQu1'],1.5)
-    cQDB.setCoefficient(['ctd1','ctb1'],-3.0)
+    cQDB.setCoefficient(['cQd1','cQb1'],-3.0)
     cQDB.setCoefficient(['cQlM1','cQlM2','cQlM3'],-2.0)
     cQDB.setCoefficient(['cQe1','cQe2','cQe3'],-1.0)
 

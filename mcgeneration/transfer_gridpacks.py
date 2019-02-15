@@ -92,7 +92,7 @@ def main():
 
 # Get a list of all (local) files to transfer
 def getFilesToTransfer(fdir='.',p_wl=[],c_wl=[],r_wl=[]):
-    search_strs = ['*._tarball.tar.xz','*._scanpoints.txt']
+    search_strs = ['.*_tarball\.tar\.xz','.*_scanpoints\.txt']
     files = []
     arr = getLocalFiles(fdir)
     for idx,f in enumerate(arr):
