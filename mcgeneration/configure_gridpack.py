@@ -102,7 +102,8 @@ def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_
             max_int - len(tracker.intg_filter),
             max_run - len(tracker.running)
         )
-        if max_submits <= 0 or done:
+        if max_submits <= 0:
+            # There are to many jobs already running, wait for some to finish
             time.sleep(delay)
             continue
 
@@ -184,6 +185,8 @@ def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_
             # Nothing left to submit and all jobs have finished running
             # Note: A kill command sent to the parent still wont kill the children processes
             done = True
+        else:
+            time.sleep(delay)
     print "Done submitting jobs!"
     print "IMPORTANT: Make sure to check the condor_q for any held jobs!"
     #print "IMPORTANT: There could still be (soon to be orphaned) running jobs, make sure to check that they complete properly!"
