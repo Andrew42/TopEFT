@@ -78,7 +78,7 @@ class JobTracker(object):
         return os.path.exists(fpath)
 
     # Check if the job's .log file contains an error line
-    def hasError(self,job,fdir='.'):
+    def logHasError(self,job,fdir='.'):
         # NOTE: Make sure to check that the job exists before calling this fcn
         if not self.isJob(job):
             return False
@@ -88,7 +88,7 @@ class JobTracker(object):
         return bool(ret)
 
     # Check if the job's .log file contains a xsec line
-    def hasXsec(self,job,fdir='.'):
+    def logHasXsec(self,job,fdir='.'):
         # NOTE: Make sure to check that the job exists before calling this fcn
         fn = os.path.join(fdir,job + '.log')
         rgx = 'Cross-section : '
