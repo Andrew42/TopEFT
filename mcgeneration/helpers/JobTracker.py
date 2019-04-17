@@ -1,7 +1,7 @@
 import os
 import datetime
 import math
-from helper_tools import run_process
+from helper_tools import run_process,regex_match
 
 # Utility class for keeping track of gridpack production jobs
 # NOTE: This assumes that all the relevant log files are in the same directory
@@ -34,6 +34,7 @@ class JobTracker(object):
         self.intg_cutoff = -1
         self.stuck_cutoff = -1
         self.tarball_cutoff = -1    # Large value requires the tarball to go longer periods without being modified
+        self.tag_filter = []          # A list of strings to compare against in order to filter out jobs from other batch runs
         self.update()
 
     def update(self):
@@ -57,6 +58,9 @@ class JobTracker(object):
 
     def setTarballCutoff(self,v):
         self.tarball_cutoff = v
+
+    def setTagFilter(self,lst):
+        self.tag_filter = lst
 
     # Return a list of scanpoint files in the target directory
     def getScanpointFiles(self,fdir='.'):
@@ -126,6 +130,10 @@ class JobTracker(object):
         jobs = []
         for fn in sp_files:
             arr = fn.split('_')
+            job_tag = arr[1]
+            if len(self.tag_filter) and len(regex_match([job_tag],self.tag_filter)) == 0:
+                # Skip jobs which don't match any of the tag filters
+                continue
             jobs.append('_'.join(arr[:3]))
         return jobs
 

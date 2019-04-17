@@ -82,6 +82,10 @@ coeffs_2Hvy_2Lgt = [cQq13,cQq83,cQq11,cQq81,cQu1,cQu8,cQd1,cQd8,ctq1,ctq8,ctu1,c
 # For submitting many gridpack jobs on cmsconnect
 def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_files=[],proc_run_wl={}):
     #NOTE: The proc_run_wl is only use for SLINSPACE mode
+    if runs == 0:
+        print "ERROR: For Batch jobs, need to specify at least 1 run!"
+        return
+
     tracker = JobTracker(fdir=os.getcwd())
     max_gen = 5         # Max number of CODEGEN jobs to have running
     max_int = 7         # Max number of INTEGRATE jobs to have running
@@ -91,6 +95,7 @@ def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_
     delay = 5.0*60      # Time between checks
     tracker.setIntegrateCutoff(int_cut)
     tracker.setTarballCutoff(tar_cut)
+    tracker.setTagFilter(["^.*%s$" % (tag_postfix)])
     done = False
     while not done:
         tracker.update()
@@ -247,7 +252,7 @@ def submit_ndim_jobs(gp,dofs,npts,runs,tag,start_pts=[],max_submits=-1):
             dof.setLimits(0,None,None)
         pt = {}
         if idx < len(start_pts):
-            pt = start_pts[idx]
+            for k,v in start_pts[idx].iteritems(): pt[k] = v
         gp.configure(
             tag=tag,
             run=idx,
@@ -313,9 +318,8 @@ def main():
     ]
 
     proc_run_wl = {}    # {proc_name: {dof_name: [runs] } }
-    start_pt = {}
-
-    sm_pt = {}
+    start_pt = {}       # {wc_name: val}
+    sm_pt    = {}
     for dof in dof_list:
         sm_pt[dof.getName()] = 0.0
 

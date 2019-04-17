@@ -487,25 +487,32 @@ class Gridpack(object):
         print "Running Gridpack: %s" % (setup)
         print "\tSetting up directories..."
 
-        output_dir = self.getGridrunOutputDirectory(create=True)
+        output_dir = self.getGridrunOutputDirectory(create=False)
         if os.path.exists(output_dir):
-            # We already ran the gridpack once!
-            print "Output directory already exists, skipping gridpack run: %s" % (setup)
-            return
-        else:
-            os.mkdir(output_dir)
+            print "Removing existing output directory: %s" % (output_dir)
+            shutil.rmtree(output_dir)
+        output_dir = self.getGridrunOutputDirectory(create=True)
+        #if os.path.exists(output_dir):
+        #    # We already ran the gridpack once!
+        #    print "Output directory already exists, skipping gridpack run: %s" % (setup)
+        #    return
+        #else:
+        #    os.mkdir(output_dir)
 
         tarball = self.getTarballString()
         if not os.path.exists(tarball):
             print "No tarball file found! Skipping..."
             return
-        print "\tMoving tarball..."
-        shutil.move(tarball,output_dir)
+        #print "\tMoving tarball..."
+        #shutil.move(tarball,output_dir)
+
+        print "\tExtracting tarball..."
+        run_process(['tar','xaf',tarball,'-C',output_dir])
 
         os.chdir(output_dir)
 
-        print "\tExtracting tarball..."
-        run_process(['tar','xaf',tarball])
+        #print "\tExtracting tarball..."
+        #run_process(['tar','xaf',tarball])
 
         print "\tRunning gridpack..."
         run_process(['./runcmsgrid.sh',str(events),str(seed),str(cores)])

@@ -1,23 +1,36 @@
 import os
 
 class MGProcess(object):
+    TDIR = "template_cards"
     def __init__(self,name,process,pcard,tdir):
-        self.name = name
-        self.p = process
-        self.pcard = pcard
-        self.template_dir = os.path.join("template_cards",tdir)
+        self.setName(name)
+        self.setProcess(process)
+        self.setProcessCard(pcard)
+        self.setTemplateDir(tdir)
 
     def getName(self):
         return self.name
 
+    def setName(self,name):
+        self.name = name
+
     def getProcess(self):
         return self.p
+
+    def setProcess(self,p):
+        self.p = p
 
     def getProcessCard(self):
         return self.pcard
 
+    def setProcessCard(self,card):
+        self.pcard = card
+
     def getTemplateDir(self):
         return self.template_dir
+
+    def setTemplateDir(self,tdir):
+        self.template_dir = os.path.join(self.TDIR,tdir)
 
 if __name__ == "__main__":
     ttH      = MGProcess(name='ttH'     ,process='ttH'  ,pcard='ttH.dat'     ,tdir='defaultPDFs_template')
