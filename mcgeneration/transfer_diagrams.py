@@ -1,11 +1,11 @@
 import os
 import shutil
+import subprocess
 
 # This script is used to move the feynman diagrams produced by running MadGraph to some desired location for easier browsing/viewing
 # NOTE: The MadGraph runs need to follow the p_c_r_* style naming convention for proper identification!
 
 OUTPUT_DIRECTORY = "/afs/cern.ch/user/a/awightma/www/eft_analysis/diagrams"
-SUBPROCESS_DIRECTORY = "work/processtmp/SubProcesses"
 
 # Search the specified locations for directories corresponding to MadGraph runs
 def getProcessDirectories(path='.',p_wl=[],c_wl=[],r_wl=[]):
@@ -110,15 +110,31 @@ def transferFiles(source_dirs,target_dirs):
             ftarget = os.path.join(match,ft)
             print "[INFO] Copying '%s' to '%s'" % (ft,match)
             shutil.copyfile(fsource,ftarget)
+            cleanDiagram(ftarget)
             copied_files.append([fsource,ftarget])
     return copied_files
+
+# Clean the matrix.ps postscript file in order to make things more readable
+def cleanDiagram(fpath):
+    fname = os.path.basename(fpath)
+    if not os.path.exists(fpath): return
+    elif not os.path.isfile(fpath): return
+    elif not fname.endswith('.ps') or not 'matrix' in fname: return
+    print "[INFO] Cleaning: %s" % (fpath)
+    # NOTE: The order of these calls matters (namely the first two calls need to be first)!
+    subprocess.check_call(['sed','-i','-e','s| FCNC_[Aa-Zz0-9]*=0,||g',fpath])    # Remove any instance of the string ' FCNC_XYZ###=0,'
+    subprocess.check_call(['sed','-i','-e','s| DIM6_[Aa-Zz0-9]*=0,||g',fpath])    # Remove any instance of the string ' DIM6_XYZ###=0,'
+    subprocess.check_call(['sed','-i','-e','s| FCNC=0,||g',fpath])                # Remove any instance of the specific string ' FCNC=0,'
+    subprocess.check_call(['sed','-i','-e','s|DIM6_||g'   ,fpath])                # Remove the 'DIM6_' prefix from the diagram
+    subprocess.check_call(['sed','-i','-e','s|DIM6=1, ||g',fpath])                # Remove uneeded 'DIM6=1' strings from the diagram
+    return
 
 # Transfers the Feynman diagrams from a particular MadGraph run to some output directory location
 def transferDiagrams(path):
     source = os.path.split(path)[1]
     print "[INFO] Transfering Feynman diagrams: %s" % (source)
     p,c,r = source.split('_')
-    source_path = os.path.join('./',source,"%s_gridpack" % (source),SUBPROCESS_DIRECTORY)
+    source_path = os.path.join('./',source)
     target_path = os.path.join(OUTPUT_DIRECTORY,"%s_%s" % (p,c))
     source_dirs = getSubProcessDirectories(source_path)
     target_dirs = []
@@ -130,7 +146,10 @@ def transferDiagrams(path):
     return copied_files
 
 def main():
-    sources = getProcessDirectories(path='.')
+    p_wl = []
+    c_wl = []
+    r_wl = []
+    sources = getProcessDirectories(path='.',p_wl=p_wl,c_wl=c_wl,r_wl=r_wl)
     for s in sources:
         transferDiagrams(s)
 
