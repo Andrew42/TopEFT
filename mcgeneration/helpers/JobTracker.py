@@ -34,7 +34,9 @@ class JobTracker(object):
         self.intg_cutoff = -1
         self.stuck_cutoff = -1
         self.tarball_cutoff = -1    # Large value requires the tarball to go longer periods without being modified
-        self.tag_filter = []          # A list of strings to compare against in order to filter out jobs from other batch runs
+        self.proc_filter = []       # A list of strings to compare against in order to filter out jobs from other batch runs
+        self.tags_filter = []
+        self.runs_filter = []
         self.update()
 
     def update(self):
@@ -59,8 +61,17 @@ class JobTracker(object):
     def setTarballCutoff(self,v):
         self.tarball_cutoff = v
 
-    def setTagFilter(self,lst):
-        self.tag_filter = lst
+    def setJobFilters(self,procs=[],tags=[],runs=[]):
+        # The if statements ensure we don't accidentally erase one of the filters
+        if self.proc_filter and procs: self.proc_filter = list(procs)
+        if self.tags_filter and tags:  self.tags_filter = list(tags)
+        if self.runs_filter and runs:  self.runs_filter = list(runs)
+
+    # Explicitly clear all job filters
+    def clearJobFilters(self):
+        self.proc_filter = []
+        self.tags_filter = []
+        self.runs_filter = []
 
     # Return a list of scanpoint files in the target directory
     def getScanpointFiles(self,fdir='.'):
@@ -130,10 +141,11 @@ class JobTracker(object):
         jobs = []
         for fn in sp_files:
             arr = fn.split('_')
-            job_tag = arr[1]
-            if len(self.tag_filter) and len(regex_match([job_tag],self.tag_filter)) == 0:
-                # Skip jobs which don't match any of the tag filters
-                continue
+            p,t,r = arr[:3]
+            # Skip jobs which don't match the job filters
+            if self.proc_filter and len(regex_match([p],self.proc_filter)) == 0: continue
+            if self.tags_filter and len(regex_match([t],self.tags_filter)) == 0: continue
+            if self.runs_filter and len(regex_match([r],self.runs_filter)) == 0: continue
             jobs.append('_'.join(arr[:3]))
         return jobs
 

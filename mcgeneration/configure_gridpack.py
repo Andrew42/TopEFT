@@ -95,7 +95,9 @@ def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_
     delay = 5.0*60      # Time between checks
     tracker.setIntegrateCutoff(int_cut)
     tracker.setTarballCutoff(tar_cut)
-    tracker.setTagFilter(["^.*%s$" % (tag_postfix)])
+    proc_filter = ["^%s$" % (x.getName()) for x in proc_list]
+    tags_filter = ["^%s$" % (tag_postfix)] + ["^%s%s$" % (x.getName(),tag_postfix) for x in dofs]
+    tracker.setJobFilters(procs=proc_filter,tags=tags_filter)
     done = False
     while not done:
         tracker.update()
