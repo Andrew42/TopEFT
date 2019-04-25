@@ -451,7 +451,7 @@ class Gridpack(object):
             if self.ops['save_diagrams']:
                 run_process(['./diagram_generation.sh',setup,target_dir])
             else:
-                run_process(['./gridpack_generation.sh',setup,target_dir])
+                run_process(['./gridpack_generation.sh',setup,target_dir,"local","ALL",self.CURR_ARCH,self.CURR_RELEASE])
             return True
         elif btype == BatchType.LSF:
             # For batch running
