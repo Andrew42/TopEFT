@@ -17,14 +17,14 @@ from helpers.MGProcess import MGProcess
 #python configure_gridpack.py >& output.log &
 
 #NOTE: The template directory should contain run_card.dat and customizecards.dat files
-ttH      = MGProcess(name='ttH'     ,process='ttH'   ,pcard='ttH.dat'     ,tdir='defaultPDFs_template')
+ttH      = MGProcess(name='ttH'     ,process='ttH'   ,pcard='ttH.dat'     ,tdir='EFT-ttH_template')
+ttll     = MGProcess(name='ttll'    ,process='ttll'  ,pcard='ttll.dat'    ,tdir='EFT-ttll_template')
+ttlnu    = MGProcess(name='ttlnu'   ,process='ttlnu' ,pcard='ttlnu.dat'   ,tdir='EFT-ttlnu_template')
+tllq     = MGProcess(name='tllq'    ,process='tllq'  ,pcard='tllq.dat'    ,tdir='EFT-tllq_template')
+tHq      = MGProcess(name='tHq'     ,process='tHq'   ,pcard='tHq.dat'     ,tdir='EFT-tHq_template')
 ttHJet   = MGProcess(name='ttHJet'  ,process='ttH'   ,pcard='ttHJet.dat'  ,tdir='jets_template')
 ttHDecay = MGProcess(name='ttHDecay',process='ttH'   ,pcard='ttHDecay.dat',tdir='defaultPDFs_template')
-ttll     = MGProcess(name='ttll'    ,process='ttll'  ,pcard='ttll.dat'    ,tdir='defaultPDFs_template')
-ttlnu    = MGProcess(name='ttlnu'   ,process='ttlnu' ,pcard='ttlnu.dat'   ,tdir='defaultPDFs_template')
-tllq     = MGProcess(name='tllq'    ,process='tllq'  ,pcard='tllq.dat'    ,tdir='defaultPDFs_template')
 ttbar    = MGProcess(name='ttbar'   ,process='ttbar' ,pcard='ttbar.dat'   ,tdir='defaultPDFs_template')
-tHq      = MGProcess(name='tHq'     ,process='tHq'   ,pcard='tHq.dat'     ,tdir='tHq_template')
 tHlnu    = MGProcess(name='tHlnu'   ,process='tHlnu' ,pcard='tHlnu.dat'   ,tdir='centralTHW_template')
 ttWlnu   = MGProcess(name='ttWlnu'  ,process='ttWlnu',pcard='ttWlnu.dat'  ,tdir='centralTTWW_template')
 tttt     = MGProcess(name='tttt'    ,process='tttt'  ,pcard='tttt.dat'    ,tdir='tttt_template')
@@ -322,8 +322,7 @@ def main():
     proc_run_wl = {}    # {proc_name: {dof_name: [runs] } }
     start_pt = {}       # {wc_name: val}
     sm_pt    = {}
-    for dof in dof_list:
-        sm_pt[dof.getName()] = 0.0
+    for dof in dof_list: sm_pt[dof.getName()] = 0.0
 
     if stype == ScanType.SLINSPACE:
         tag = tag + "AxisScan"
@@ -377,6 +376,14 @@ def main():
                 tag_postfix=tag,
                 max_submits=-1,
                 run_wl={}
+            )
+        elif stype == ScanType.FROMFILE and runs:
+            submitted += submit_scanfile_jobs(
+                gp=gridpack,
+                dofs=dof_list,
+                tag=tag,
+                scan_files=scan_files,
+                max_submits=-1
             )
         else:
             gridpack.configure(tag=tag,run=0,dofs=dof_list,num_pts=npts,start_pt=start_pt)
