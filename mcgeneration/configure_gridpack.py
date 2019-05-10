@@ -29,6 +29,9 @@ tHlnu    = MGProcess(name='tHlnu'   ,process='tHlnu' ,pcard='tHlnu.dat'   ,tdir=
 ttWlnu   = MGProcess(name='ttWlnu'  ,process='ttWlnu',pcard='ttWlnu.dat'  ,tdir='centralTTWW_template')
 tttt     = MGProcess(name='tttt'    ,process='tttt'  ,pcard='tttt.dat'    ,tdir='tttt_template')
 
+ttllNoHiggs = MGProcess(name='ttll',process='ttll',pcard='ttllNoHiggs.dat',tdir='EFT-ttll_template')
+tllqNoHiggs = MGProcess(name='tllq',process='tllq',pcard='tllqNoHiggs.dat',tdir='EFT-ttll_template')
+
 ctp   = DegreeOfFreedom(name='ctp'  ,relations=[['ctp'] ,1.0])
 cpQM  = DegreeOfFreedom(name='cpQM' ,relations=[['cpQM'],1.0])
 cpQ3  = DegreeOfFreedom(name='cpQ3' ,relations=[['cpQ3'],1.0])
