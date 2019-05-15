@@ -32,6 +32,8 @@ tttt     = MGProcess(name='tttt'    ,process='tttt'  ,pcard='tttt.dat'    ,tdir=
 ttllNoHiggs = MGProcess(name='ttll',process='ttll',pcard='ttllNoHiggs.dat',tdir='EFT-ttll_template')
 tllqNoHiggs = MGProcess(name='tllq',process='tllq',pcard='tllqNoHiggs.dat',tdir='EFT-ttll_template')
 
+ttlnuJets = MGProcess(name='ttlnuJets',process='ttlnu',pcard='ttlnuJets.dat',tdir='ttlnuJets_template')
+
 ctp   = DegreeOfFreedom(name='ctp'  ,relations=[['ctp'] ,1.0])
 cpQM  = DegreeOfFreedom(name='cpQM' ,relations=[['cpQM'],1.0])
 cpQ3  = DegreeOfFreedom(name='cpQ3' ,relations=[['cpQ3'],1.0])
