@@ -30,9 +30,11 @@ ttWlnu   = MGProcess(name='ttWlnu'  ,process='ttWlnu',pcard='ttWlnu.dat'  ,tdir=
 tttt     = MGProcess(name='tttt'    ,process='tttt'  ,pcard='tttt.dat'    ,tdir='tttt_template')
 
 ttllNoHiggs = MGProcess(name='ttll',process='ttll',pcard='ttllNoHiggs.dat',tdir='EFT-ttll_template')
-tllqNoHiggs = MGProcess(name='tllq',process='tllq',pcard='tllqNoHiggs.dat',tdir='EFT-ttll_template')
+tllqNoHiggs = MGProcess(name='tllq',process='tllq',pcard='tllqNoHiggs.dat',tdir='EFT-tllq_template')
 
-ttlnuJets = MGProcess(name='ttlnuJets',process='ttlnu',pcard='ttlnuJets.dat',tdir='ttlnuJets_template')
+ttlnuJet = MGProcess(name='ttlnuJet',process='ttlnu',pcard='ttlnuJet.dat',tdir='ttlnuJet_template')
+
+tllq4f = MGProcess(name='tllq4f',process='tllq',pcard='tllq4f.dat',tdir='tllq-4f_template')
 
 ctp   = DegreeOfFreedom(name='ctp'  ,relations=[['ctp'] ,1.0])
 cpQM  = DegreeOfFreedom(name='cpQM' ,relations=[['cpQM'],1.0])
@@ -189,6 +191,21 @@ def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_
                     scan_files=scan_files,
                     max_submits=max_submits
 
+                )
+            elif stype == ScanType.NONE:
+                # No reweighting is done and SM starting point is used
+                start_pts = []
+                pt = {}
+                for dof in dofs: pt[dof.getName()] = 0.0
+                start_pts.append(pt)
+                submitted += submit_ndim_jobs(
+                    gp=gridpack,
+                    dofs=dofs,
+                    npts=0,
+                    runs=1,
+                    tag=tag_postfix,
+                    start_pts=start_pts,
+                    max_submits=max_submits
                 )
             if submitted >= max_submits:
                 break
