@@ -59,11 +59,19 @@ class Gridpack(object):
             'save_diagrams': False,                     # Runs a modified version of the generation script that exits early to keep feynman diagrams
             'use_coupling_model': False,                # Use the 'coupling_orders' version of the dim6 model
             'coupling_string': None,                    # If not None replaces "DIM6=1" with the specified string in the process card
+            'flavor_scheme': process.getFlavorScheme(self.CARD_DIR),
         }
 
         self.scan_pts = []
         self.is_configured = False
         return
+
+    # Change the process associated with this Gridpack object
+    def setProcess(self,process):
+        self.ops['process']       = process.getName()
+        self.ops['limits_name']   = process.getProcess()
+        self.ops['template_dir']  = process.getTemplateDir()
+        self.ops['flavor_scheme'] = process.getFlavorScheme(self.CARD_DIR)
 
     ################################################################################################
     def getSetupString(self):
@@ -175,6 +183,7 @@ class Gridpack(object):
             info += indent + "Setup: %s\n" % (self.getSetupString())
         info += indent + "Process     : %s\n" % (self.ops['process'])
         info += indent + "Process Card: %s\n" % (self.ops['process_card'])
+        info += indent + "FlavorScheme: %s\n" % (self.ops['flavor_scheme'])
         info += indent + "ScanType    : %s\n" % (self.ops['stype'])
         info += indent + "BatchType   : %s\n" % (self.ops['btype'])
         info += indent + "Rwgt Points : %d\n" % (self.ops['num_rwgt_pts'])
@@ -182,6 +191,7 @@ class Gridpack(object):
         info += self.limitSettings(header=True,depth=depth)
         return info
 
+    # WIP
     def configureSettings(self,header=True,depth=0):
         """ Print only the configure related settings for this gridpack instance """
         indent = "\t"*depth
@@ -349,7 +359,7 @@ class Gridpack(object):
         shutil.copy(proc_src,proc_tar)
 
         # Sets the initial WC phase space point for MadGraph to start from (appends to customize card)
-        set_initial_point(customize_tar,self.ops['coeffs'])
+        set_initial_point(customize_tar,self.ops['coeffs'],flavor_scheme=self.ops['flavor_scheme'])
 
         scanfile = self.getScanfileString()
         rwgt_tar = os.path.join(target_dir,"%s_%s" % (setup,self.MG_REWEIGHT_CARD))

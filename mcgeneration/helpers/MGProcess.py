@@ -2,6 +2,9 @@ import os
 
 class MGProcess(object):
     TDIR = "template_cards"
+    TEMPLATE_RUN_CARD = 'run_card.dat'
+    TEMPLATE_CUSTOM_CARD = 'customizecards.dat'
+
     def __init__(self,name,process,pcard,tdir):
         self.setName(name)
         self.setProcess(process)
@@ -31,6 +34,28 @@ class MGProcess(object):
 
     def setTemplateDir(self,tdir):
         self.template_dir = os.path.join(self.TDIR,tdir)
+
+    def getFlavorScheme(self,card_dir):
+        fpath = os.path.join(card_dir,self.getTemplateDir(),self.TEMPLATE_RUN_CARD)
+        flvr_str = "maxjetflavor"
+        comment_char = "#"
+        flvr_scheme = -1
+        with open(fpath,'r') as f:
+            for l in f:
+                l = l.strip()
+                if len(l) == 0 or l[0] == comment_char:
+                    continue
+                elif not flvr_str in l:
+                    continue
+                lst = l.split('=')
+                if len(lst) != 2:
+                    continue
+                s1,s2 = lst
+                flvr_scheme = int(s1)   # Doesn't care about whitespace
+                break
+        return flvr_scheme
+
+
 
 if __name__ == "__main__":
     ttH      = MGProcess(name='ttH'     ,process='ttH'  ,pcard='ttH.dat'     ,tdir='defaultPDFs_template')

@@ -54,10 +54,11 @@ def check_point(pt1,pt2):
     return True
 
 # Sets the initial W.C. phase space point for MadGraph to start from (appends to customize card)
-def set_initial_point(file_name,dofs):
+def set_initial_point(file_name,dofs,flavor_scheme=5):
     with open(file_name,'a') as f:
-        f.write('set param_card MB 0.0 \n')
-        f.write('set param_card ymb 0.0 \n')
+        if flavor_scheme == 5:
+            f.write('set param_card MB 0.0 \n')
+            f.write('set param_card ymb 0.0 \n')
         for c,dof in dofs.iteritems():
             for k,v in dof.eval(dof.getStart()).iteritems():
                 f.write("set param_card %s %.6f \n" % (k,v))
