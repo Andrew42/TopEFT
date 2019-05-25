@@ -15,7 +15,7 @@ def main():
 
     protocol = 'gsiftp://'
     tar_host = 'deepthought.crc.nd.edu'
-    tar_dir = '/store/user/awightma/gridpack_scans/2018_08_24/'
+    tar_dir = '/store/user/awightma/gridpack_scans/2019_04_19/'
     sub_dir = '/scanpoints/'
     failed_copies = []
     good_copies = []
