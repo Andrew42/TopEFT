@@ -63,9 +63,9 @@ class JobTracker(object):
 
     def setJobFilters(self,procs=[],tags=[],runs=[]):
         # The if statements ensure we don't accidentally erase one of the filters
-        if self.proc_filter and procs: self.proc_filter = list(procs)
-        if self.tags_filter and tags:  self.tags_filter = list(tags)
-        if self.runs_filter and runs:  self.runs_filter = list(runs)
+        if procs: self.proc_filter = list(procs)
+        if tags:  self.tags_filter = list(tags)
+        if runs:  self.runs_filter = list(runs)
 
     # Explicitly clear all job filters
     def clearJobFilters(self):
