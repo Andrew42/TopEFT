@@ -104,7 +104,11 @@ class Gridpack(object):
         if create and not os.path.exists(process_subdir):
             os.mkdir(process_subdir)
         setup = self.getSetupString()
-        return os.path.join(process_subdir,"%s" % (setup))
+        output_dir = os.path.join(process_subdir,"%s" % (setup))
+        if create and not os.path.exists(output_dir):
+            os.mkdir(output_dir)
+        #return os.path.join(process_subdir,"%s" % (setup))
+        return output_dir
 
     def getTargetDirectory(self,create=False):
         """
