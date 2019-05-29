@@ -511,6 +511,7 @@ make_gridpack () {
    
       pwd
 
+      # This no longer works b/c we need to unpack the pilotrun gridpack tarball first
       #RWSEED=657343
       #RWNEVT=1000
       #./run.sh $RWNEVT $RWSEED

@@ -134,9 +134,6 @@ def cmsconnect_chain_submit(gridpack,dofs,proc_list,tag_postfix,rwgt_pts,runs,st
             if p_obj is None: continue 
             tmp_gp = Gridpack(tag=c,run=int(r[3:]))
             tmp_gp.setProcess(p_obj)
-            #tmp_gp = Gridpack(process=p_obj)
-            #tmp_gp.ops['tag'] = c
-            #tmp_gp.ops['run'] = int(r[3:])  # Need to get the integer value from the run string
             if not tmp_gp.exists():
                 continue
             tmp_gp.is_configured = True
@@ -146,11 +143,6 @@ def cmsconnect_chain_submit(gridpack,dofs,proc_list,tag_postfix,rwgt_pts,runs,st
         submitted = 0
         for p in proc_list:
             gridpack.setProcess(p)
-            #gridpack = Gridpack(
-            #    process=p,
-            #    stype=stype,
-            #    btype=BatchType.CMSCONNECT
-            #)
             #TODO: Might not want to split it up like this
             if stype == ScanType.SLINSPACE:
                 if proc_run_wl.has_key(p.getName()):
@@ -230,7 +222,6 @@ def cmsconnect_chain_submit(gridpack,dofs,proc_list,tag_postfix,rwgt_pts,runs,st
 def submit_1dim_jobs(gp,dofs,npts,runs,tag_postfix='',max_submits=-1,run_wl={}):
     submitted = 0
     delay    =  10.0   # Time between successful submits (in seconds)
-    def_low,def_high = gp.getOption('default_limits')
     wc_limits = parse_limit_file(os.path.join("addons/limits","dim6top_LO_UFO_limits.txt"))
     for dof in dofs:
         dof_subset = [dof]
@@ -341,7 +332,7 @@ def main():
     proc_list = [ttH]
     dof_list  = [
         ctp,cpQM,ctW,ctZ,ctG,cbW,cpQ3,cptb,cpt,
-        c0Ql3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi
+        cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi
     ]
 
     proc_run_wl = {}    # {proc_name: {dof_name: [runs] } }
