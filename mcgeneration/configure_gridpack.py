@@ -36,6 +36,10 @@ ttlnuJet = MGProcess(name='ttlnuJet',process='ttlnu',pcard='ttlnuJet.dat',tdir='
 
 tllq4f = MGProcess(name='tllq4f',process='tllq',pcard='tllq4f.dat',tdir='tllq-4f_template')
 
+ttHJetgg = MGProcess(name='ttHJetgg',process='ttH',pcard='ttHJetgg.dat',tdir='ttlnuJet_template')
+ttHJetgq = MGProcess(name='ttHJetgq',process='ttH',pcard='ttHJetgq.dat',tdir='ttlnuJet_template')
+ttHJetqq = MGProcess(name='ttHJetqq',process='ttH',pcard='ttHJetqq.dat',tdir='ttlnuJet_template')
+
 ctp   = DegreeOfFreedom(name='ctp'  ,relations=[['ctp'] ,1.0])
 cpQM  = DegreeOfFreedom(name='cpQM' ,relations=[['cpQM'],1.0])
 cpQ3  = DegreeOfFreedom(name='cpQ3' ,relations=[['cpQ3'],1.0])
@@ -87,7 +91,7 @@ coeffs_4Hvy      = [cQQ1,cQQ8,cQt1,cQt8,ctt1,ctb1,cQtQb1,cQtQb8]    # 8 operator
 coeffs_2Hvy_2Lgt = [cQq13,cQq83,cQq11,cQq81,cQu1,cQu8,cQd1,cQd8,ctq1,ctq8,ctu1,ctu8,ctd1,ctd8]  # 14 operators
 
 # For submitting many gridpack jobs on cmsconnect
-def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_files=[],proc_run_wl={}):
+def cmsconnect_chain_submit(gridpack,dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_files=[],proc_run_wl={}):
     #NOTE: The proc_run_wl is only use for SLINSPACE mode
     if runs == 0:
         print "ERROR: For Batch jobs, need to specify at least 1 run!"
@@ -127,11 +131,12 @@ def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_
                 continue
             p,c,r = job.split('_')
             p_obj = find_process(p,proc_list)
-            if p_obj is None:
-                continue 
-            tmp_gp = Gridpack(process=p_obj)
-            tmp_gp.ops['tag'] = c
-            tmp_gp.ops['run'] = int(r[3:])  # Need to get the integer value from the run string
+            if p_obj is None: continue 
+            tmp_gp = Gridpack(tag=c,run=int(r[3:]))
+            tmp_gp.setProcess(p_obj)
+            #tmp_gp = Gridpack(process=p_obj)
+            #tmp_gp.ops['tag'] = c
+            #tmp_gp.ops['run'] = int(r[3:])  # Need to get the integer value from the run string
             if not tmp_gp.exists():
                 continue
             tmp_gp.is_configured = True
@@ -140,11 +145,12 @@ def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_
 
         submitted = 0
         for p in proc_list:
-            gridpack = Gridpack(
-                process=p,
-                stype=stype,
-                btype=BatchType.CMSCONNECT
-            )
+            gridpack.setProcess(p)
+            #gridpack = Gridpack(
+            #    process=p,
+            #    stype=stype,
+            #    btype=BatchType.CMSCONNECT
+            #)
             #TODO: Might not want to split it up like this
             if stype == ScanType.SLINSPACE:
                 if proc_run_wl.has_key(p.getName()):
@@ -224,20 +230,18 @@ def cmsconnect_chain_submit(dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_
 def submit_1dim_jobs(gp,dofs,npts,runs,tag_postfix='',max_submits=-1,run_wl={}):
     submitted = 0
     delay    =  10.0   # Time between successful submits (in seconds)
-    def_low  = -20.0
-    def_high =  20.0
+    def_low,def_high = gp.getOption('default_limits')
     wc_limits = parse_limit_file(os.path.join("addons/limits","dim6top_LO_UFO_limits.txt"))
     for dof in dofs:
         dof_subset = [dof]
         dof_name = dof.getName()
-        lim_key = gp.ops['process'] + '_' + dof_name
+        lim_key = gp.getOption('process') + '_' + dof_name
         tag = dof_name + tag_postfix
         if wc_limits.has_key(lim_key):
             low_lim  = round(wc_limits[lim_key][0],6)
             high_lim = round(wc_limits[lim_key][1],6)
         else:
-            low_lim  = def_low
-            high_lim = def_high
+            low_lim,high_lim = gp.getOption('default_limits')
         for idx,start in enumerate(linspace(low_lim,high_lim,runs)):
             if run_wl.has_key(dof_name) and idx not in run_wl[dof_name]:
                 continue
@@ -282,8 +286,7 @@ def submit_ndim_jobs(gp,dofs,npts,runs,tag,start_pts=[],max_submits=-1):
             run=idx,
             dofs=dofs,
             num_pts=npts,
-            start_pt=pt,
-            def_limits=[-20.0,20.0]
+            start_pt=pt
         )
         if not gp.exists():
             gp.setup()
@@ -328,8 +331,8 @@ def main():
     stype = ScanType.NONE
     btype = BatchType.NONE
     tag   = 'ExampleTag'
-    runs  = 7               # if set to 0, will only make a single gridpack
-    npts  = 10
+    runs  = 1               # if set to 0, will only make a single gridpack
+    npts  = 0
     scan_files = [
         'scanfiles/ttll_16DOldLimitsAxisScan_run0_scanpoints.txt',
         'scanfiles/ttll_16DOldLimitsAxisScan_run1_scanpoints.txt',
@@ -338,13 +341,18 @@ def main():
     proc_list = [ttH]
     dof_list  = [
         ctp,cpQM,ctW,ctZ,ctG,cbW,cpQ3,cptb,cpt,
-        cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi
+        c0Ql3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi
     ]
 
     proc_run_wl = {}    # {proc_name: {dof_name: [runs] } }
     start_pt = {}       # {wc_name: val}
     sm_pt    = {}
     for dof in dof_list: sm_pt[dof.getName()] = 0.0
+
+    gridpack = Gridpack(stype=stype,btype=btype,default_limits=[-20.0,20.0])
+    # For creating feynman diagrams
+    #gridpack.setOptions(btype=BatchType.LOCAL,save_diagrams=True,use_coupling_model=True)
+    #gridpack.setOptions(coupling_string="FCNC=0 DIM6^2=1 DIM6_ctZ^2=1 DIMG_ctW^2=1")
 
     if stype == ScanType.SLINSPACE:
         tag = tag + "AxisScan"
@@ -354,6 +362,7 @@ def main():
     if btype == BatchType.CMSCONNECT:
         # For submitting on CMSCONNECT, uses a way to track running jobs
         cmsconnect_chain_submit(
+            gridpack=gridpack,
             dofs=dof_list,
             proc_list=proc_list,
             tag_postfix=tag,
@@ -361,22 +370,14 @@ def main():
             runs=runs,
             stype=stype,
             scan_files=scan_files,
-            proc_run_wl=proc_run_wl)
+            proc_run_wl=proc_run_wl
+        )
         return
 
     # Generic gridpack production example
     submitted = 0
     for p in proc_list:
-        gridpack = Gridpack(
-            process=p,
-            stype=stype,
-            btype=btype
-        )
-
-        # For creating feynman diagrams
-        #gridpack.ops['save_diagrams'] = True
-        #gridpack.ops['use_coupling_model'] = True
-        #gridpack.ops['coupling_string'] = "FCNC=0 DIM6^2==1 DIM6_ctZ^2==1 DIM6_ctW^2==1"
+        gridpack.setProcess(p)
 
         # If runs == 0, we probably are trying to make specific types of gridpacks by hand
         if stype == ScanType.FRANDOM and runs:

@@ -11,7 +11,7 @@ from helper_tools import *
 # Class for configuring and setting up the submission for a single gridpack, can also run a produced gridpack tarball
 class Gridpack(object):
     #def __init__(self,process,limits_name,proc_card,template_dir,stype=ScanType.NONE,btype=BatchType.NONE):
-    def __init__(self,process,stype=ScanType.NONE,btype=BatchType.NONE):
+    def __init__(self,**kwargs):
         self.HOME_DIR      = os.getcwd()
         self.CARD_DIR      = os.path.join("addons","cards")
         self.LIMITS_DIR    = os.path.join("addons","limits")
@@ -45,33 +45,62 @@ class Gridpack(object):
         self.GENPROD_SCRIPT   = 'gridpack_generation.sh'
 
         self.ops = {
-            'btype': btype,
-            'stype': stype,
-            'process': process.getName(),
+            'btype': BatchType.NONE,
+            'stype': ScanType.NONE,
+            'process': None,
             'tag': 'Test',
             'run': 0,
             'coeffs': [],
             'start_pt': {},
             'num_rwgt_pts': 0,
-            'limits_name': process.getProcess(),        # The process name as it appears in the limits file
-            'process_card': process.getProcessCard(),   # The name of the process card to be used (e.g. ttHDecay.dat)
-            'template_dir': process.getTemplateDir(),   # The path (relative to the CARD_DIR) to the dir with the template run and customize cards
-            'save_diagrams': False,                     # Runs a modified version of the generation script that exits early to keep feynman diagrams
-            'use_coupling_model': False,                # Use the 'coupling_orders' version of the dim6 model
-            'coupling_string': None,                    # If not None replaces "DIM6=1" with the specified string in the process card
-            'flavor_scheme': process.getFlavorScheme(self.CARD_DIR),
+            'limits_name': None,            # The process name as it appears in the limits file
+            'process_card': None,           # The name of the process card to be used (e.g. ttHDecay.dat)
+            'template_dir': None,           # The path (relative to the CARD_DIR) to the dir with the template run and customize cards
+            'save_diagrams': False,         # Runs a modified version of the generation script that exits early to keep feynman diagrams
+            'use_coupling_model': False,    # Use the 'coupling_orders' version of the dim6 model
+            'coupling_string': None,        # If not None replaces "DIM6=1" with the specified string in the process card
+            'flavor_scheme': 5,
+            'default_limits': [-10,10]
         }
+
+        self.setOptions(**kwargs)
 
         self.scan_pts = []
         self.is_configured = False
         return
 
+    def hasOption(self,op_name):
+        return self.ops.has_key(op_name)
+
+    # Note: Some options are complex objects (e.g. lists/dicts) and so the returned dict will contain
+    #       only refs to those objects
+    def getOptions(self,*args):
+        r = {}
+        for op in args:
+            if not self.hasOption(op): continue
+            r[op] = self.ops[op]
+        return r
+
+    # Return the value of a single option or None if invalid option name
+    def getOption(self,op):
+        r = self.ops[op] if self.hasOption(op) else None
+        return r
+
+    def setOptions(self,**kwargs):
+        for op,v in kwargs.iteritems():
+            if not self.hasOption(op):
+                print "[WARNING] Unable to set option. Unknown Option: %s" % (op)
+                continue
+            self.ops[op] = v
+
     # Change the process associated with this Gridpack object
-    def setProcess(self,process):
-        self.ops['process']       = process.getName()
-        self.ops['limits_name']   = process.getProcess()
-        self.ops['template_dir']  = process.getTemplateDir()
-        self.ops['flavor_scheme'] = process.getFlavorScheme(self.CARD_DIR)
+    def setProcess(self,p):
+        self.setOptions(
+            process=p.getName(),
+            limits_name=p.getProcess(),
+            template_dir=p.getTemplateDir(),
+            flavor_scheme=p.getFlavorScheme(self.CARD_DIR)
+        )
 
     ################################################################################################
     def getSetupString(self):
@@ -233,9 +262,9 @@ class Gridpack(object):
 
     ################################################################################################
 
-    def configure(self,tag,run,dofs,num_pts,start_pt={},def_limits=[-10.0,10.0],scan_file=None):
+    def configure(self,tag,run,dofs,num_pts,start_pt={},scan_file=None):
         """ Parses options to produce gridpack in a particular way. """
-        if len(def_limits) != 2:
+        if len(self.ops['default_limits']) != 2:
             print "Invalid input for default limits!"
             self.is_configured = False
             return
@@ -245,21 +274,22 @@ class Gridpack(object):
         self.ops['coeffs'] = {}
         for dof in dofs:    # Convert list of WCs to a dictionary
             self.ops['coeffs'][dof.getName()] = dof
-
-        def_low  = def_limits[0]
-        def_high = def_limits[1]
+        coeffs = self.getOption('coeffs')   # Should probably add check for None
 
         if scan_file:
             # Set starting point and rwgt points based on a scanpoints file
             self.scan_pts = []
             pts = parse_scan_file(scan_file)
             missing_wc = []
+            extra_wc = []
             for idx,pt in enumerate(pts):
                 new_pt = {}
                 for k,v in pt.iteritems():
                     # Keep only the WCs which have been specified
                     if self.ops['coeffs'].has_key(k):
                         new_pt[k] = v
+                    else:
+                        extra_wc.append(k)
                 if idx == 0:
                     # Set the starting point from the scanpoints file
                     for k in self.ops['coeffs'].keys():
@@ -273,6 +303,9 @@ class Gridpack(object):
                     self.scan_pts.append(new_pt)
             if len(missing_wc):
                 print "[WARNING] Scanpoints file is missing WCs used in this gridpack configuration, %s" % (str(missing_wc))
+            if len(extra_wc):
+                print "[WARNING] Scanpoints file has WCs that were not specified in this gridpack configuration, their values will be set to SM."
+                print "\t%s" % (str(extra_wc)) 
             self.ops['num_rwgt_pts'] = len(self.scan_pts)
         else:
             self.scan_pts = []  # Clear the scan_pts array incase it was used previously
@@ -302,8 +335,7 @@ class Gridpack(object):
                     high = round(wc_limits[key][1],6)
                 else:
                     # The WC doesn't exist in the limits file, so use defaults
-                    low  = def_low
-                    high = def_high
+                    low,high = self.ops['default_limits']
                 if start_pt.has_key(c):
                     strength = start_pt[c]
                 else:
