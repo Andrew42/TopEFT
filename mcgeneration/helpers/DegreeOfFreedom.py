@@ -44,6 +44,13 @@ class DegreeOfFreedom(object):
                 output[wc] = x*scale
         return output
 
+    def getCouplingString(self):
+        s = "FCNC=0 DIM6^2=1"
+        for k in self.relations.keys():
+            s += " DIM6_%s^2=1" % (k)
+        return s
+
+
 # cQDW = 1.0*cQq13 = 1.0*cQl3(l)
 # cQDB = 6.0*cQq11 = 1.5*cQu1 = -3.0*cQd1 = -3.0*cQb1 = -2.0*cQlM(l) = -1.0*cQe(l)
 # ctDB = 6.0*ctq1  = 1.5*ctu1 = -3.0*ctd1 = -3.0*ctb1 = -2.0*ctl(l)  = -1.0*cte(l)
