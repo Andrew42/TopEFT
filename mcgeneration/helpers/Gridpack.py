@@ -98,6 +98,7 @@ class Gridpack(object):
         self.setOptions(
             process=p.getName(),
             limits_name=p.getProcess(),
+            process_card=p.getProcessCard(),
             template_dir=p.getTemplateDir(),
             flavor_scheme=p.getFlavorScheme(self.CARD_DIR)
         )
