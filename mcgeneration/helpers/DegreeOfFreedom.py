@@ -45,9 +45,9 @@ class DegreeOfFreedom(object):
         return output
 
     def getCouplingString(self):
-        s = "FCNC=0 DIM6^2=1"
+        s = "FCNC=0 DIM6^2==1"
         for k in self.relations.keys():
-            s += " DIM6_%s^2=1" % (k)
+            s += " DIM6_%s^2==1" % (k)
         return s
 
 
