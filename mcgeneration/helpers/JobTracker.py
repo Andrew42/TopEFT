@@ -118,6 +118,8 @@ class JobTracker(object):
         if not self.isJob(job):
             return False
         fn = os.path.join(fdir,job + '.log')
+        if not os.path.exists(fn):
+            return False
         rgx = '^Process output directory %s not found\.' % (job)
         ret = run_process(['grep','-l','-e',rgx,fn],verbose=False)
         return bool(ret)
