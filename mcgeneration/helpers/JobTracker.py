@@ -308,13 +308,18 @@ class JobTracker(object):
             log_file = os.path.join(self.fdir,"%s.log" % (fn))
             if not os.path.exists(log_file):
                 continue
+            t = self.getLastModifiedTime("%s_scanpoints.txt" % (fn))
+            h,m,s = self.formatTime(t)
+            tot_tstr = "[%s:%s:%s]" % (h.rjust(2,"0"),m.rjust(2,"0"),s.rjust(2,"0"))
             t = self.getIntegrateTime(fn)
             h,m,s = self.formatTime(t)
             int_tstr = "[%s:%s:%s]" % (h.rjust(2,"0"),m.rjust(2,"0"),s.rjust(2,"0"))
             t = self.getLastModifiedTime(log_file)
             h,m,s = self.formatTime(t)
             mod_tstr = "[%s:%s:%s]" % (h.rjust(2,"0"),m.rjust(2,"0"),s.rjust(2,"0"))
-            print "\nChecking: %s - %s - %s" % (fn,int_tstr,mod_tstr)
+            #print "\nChecking: %s - %s - %s" % (fn,int_tstr,mod_tstr)
+            #print "\nChecking: %s - Total %s - Intg %s - LogMod %s" % (fn,tot_tstr,int_tstr,mod_tstr)
+            print "\nChecking: %s - %s - %s - %s" % (fn,tot_tstr,int_tstr,mod_tstr)
             run_process(['tail','-n%d' % (lines),log_file])
 
     def displayJobList(self,s,arr):
