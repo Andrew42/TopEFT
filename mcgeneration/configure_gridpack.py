@@ -91,7 +91,7 @@ coeffs_4Hvy      = [cQQ1,cQQ8,cQt1,cQt8,ctt1,ctb1,cQtQb1,cQtQb8]    # 8 operator
 coeffs_2Hvy_2Lgt = [cQq13,cQq83,cQq11,cQq81,cQu1,cQu8,cQd1,cQd8,ctq1,ctq8,ctu1,ctu8,ctd1,ctd8]  # 14 operators
 
 # For submitting many gridpack jobs on cmsconnect
-def cmsconnect_chain_submit(gridpack,dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_files=[],proc_run_wl={}):
+def cmsconnect_chain_submit(gridpack,dofs,proc_list,tag_postfix,rwgt_pts,runs,stype,scan_files=[],proc_run_wl={},attempt_resubmit=False):
     #NOTE: The proc_run_wl is only use for SLINSPACE mode
     if runs == 0:
         print "ERROR: For Batch jobs, need to specify at least 1 run!"
@@ -127,6 +127,8 @@ def cmsconnect_chain_submit(gridpack,dofs,proc_list,tag_postfix,rwgt_pts,runs,st
 
         # Note: This won't clean-up jobs which failed due to the codegen step
         for job in tracker.finished:
+            if not attempt_resubmit:
+                continue
             if tracker.getTarballTime(job) > 3*(tar_cut+delay):
                 # Skip checking jobs that finished sufficiently long ago
                 continue
@@ -363,7 +365,8 @@ def main():
             runs=runs,
             stype=stype,
             scan_files=scan_files,
-            proc_run_wl=proc_run_wl
+            proc_run_wl=proc_run_wl,
+            attempt_resubmit=True
         )
         return
 
