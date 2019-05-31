@@ -125,6 +125,7 @@ def cmsconnect_chain_submit(gridpack,dofs,proc_list,tag_postfix,rwgt_pts,runs,st
             time.sleep(delay)
             continue
 
+        # Note: This won't clean-up jobs which failed due to the codegen step
         for job in tracker.finished:
             if tracker.getTarballTime(job) > 3*(tar_cut+delay):
                 # Skip checking jobs that finished sufficiently long ago
@@ -139,6 +140,7 @@ def cmsconnect_chain_submit(gridpack,dofs,proc_list,tag_postfix,rwgt_pts,runs,st
             tmp_gp.is_configured = True
             if tracker.logHasError(job=job,fdir='.') or not tracker.logHasXsec(job=job,fdir='.'):
                 tmp_gp.clean()
+                tracker.addResubmit(tmp_gp.getSetupString())
 
         submitted = 0
         for p in proc_list:
