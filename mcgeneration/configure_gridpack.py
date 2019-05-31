@@ -17,28 +17,33 @@ from helpers.MGProcess import MGProcess
 #python configure_gridpack.py >& output.log &
 
 #NOTE: The template directory should contain run_card.dat and customizecards.dat files
-ttH      = MGProcess(name='ttH'     ,process='ttH'   ,pcard='ttH.dat'     ,tdir='EFT-ttH_template')
-ttll     = MGProcess(name='ttll'    ,process='ttll'  ,pcard='ttll.dat'    ,tdir='EFT-ttll_template')
-ttlnu    = MGProcess(name='ttlnu'   ,process='ttlnu' ,pcard='ttlnu.dat'   ,tdir='EFT-ttlnu_template')
-tllq     = MGProcess(name='tllq'    ,process='tllq'  ,pcard='tllq.dat'    ,tdir='EFT-tllq_template')
 tHq      = MGProcess(name='tHq'     ,process='tHq'   ,pcard='tHq.dat'     ,tdir='EFT-tHq_template')
-ttHJet   = MGProcess(name='ttHJet'  ,process='ttH'   ,pcard='ttHJet.dat'  ,tdir='jets_template')
-ttHDecay = MGProcess(name='ttHDecay',process='ttH'   ,pcard='ttHDecay.dat',tdir='defaultPDFs_template')
 ttbar    = MGProcess(name='ttbar'   ,process='ttbar' ,pcard='ttbar.dat'   ,tdir='defaultPDFs_template')
 tHlnu    = MGProcess(name='tHlnu'   ,process='tHlnu' ,pcard='tHlnu.dat'   ,tdir='centralTHW_template')
 ttWlnu   = MGProcess(name='ttWlnu'  ,process='ttWlnu',pcard='ttWlnu.dat'  ,tdir='centralTTWW_template')
 tttt     = MGProcess(name='tttt'    ,process='tttt'  ,pcard='tttt.dat'    ,tdir='tttt_template')
 
-ttllNoHiggs = MGProcess(name='ttll',process='ttll',pcard='ttllNoHiggs.dat',tdir='EFT-ttll_template')
-tllqNoHiggs = MGProcess(name='tllq',process='tllq',pcard='tllqNoHiggs.dat',tdir='EFT-tllq_template')
-
-ttlnuJet = MGProcess(name='ttlnuJet',process='ttlnu',pcard='ttlnuJet.dat',tdir='ttlnuJet_template')
-
-tllq4f = MGProcess(name='tllq4f',process='tllq',pcard='tllq4f.dat',tdir='tllq-4f_template')
+ttH      = MGProcess(name='ttH'     ,process='ttH',pcard='ttH.dat'     ,tdir='EFT-ttH_template')
+ttHJet   = MGProcess(name='ttHJet'  ,process='ttH',pcard='ttHJet.dat'  ,tdir='jets_template')
+ttHDecay = MGProcess(name='ttHDecay',process='ttH',pcard='ttHDecay.dat',tdir='defaultPDFs_template')
 
 ttHJetgg = MGProcess(name='ttHJetgg',process='ttH',pcard='ttHJetgg.dat',tdir='ttlnuJet_template')
 ttHJetgq = MGProcess(name='ttHJetgq',process='ttH',pcard='ttHJetgq.dat',tdir='ttlnuJet_template')
 ttHJetqq = MGProcess(name='ttHJetqq',process='ttH',pcard='ttHJetqq.dat',tdir='ttlnuJet_template')
+
+ttll        = MGProcess(name='ttll'       ,process='ttll',pcard='ttll.dat'       ,tdir='EFT-ttll_template')
+ttllNoHiggs = MGProcess(name='ttllNoHiggs',process='ttll',pcard='ttllNoHiggs.dat',tdir='EFT-ttll_template')
+
+tllq        = MGProcess(name='tllq'       ,process='tllq',pcard='tllq.dat'       ,tdir='EFT-tllq_template')
+tllqNoHiggs = MGProcess(name='tllqNoHiggs',process='tllq',pcard='tllqNoHiggs.dat',tdir='EFT-tllq_template')
+
+tllq4f        = MGProcess(name='tllq4f'       ,process='tllq',pcard='tllq4f.dat'       ,tdir='tllq-4f_template')
+tllq4fNoHiggs = MGProcess(name='tllq4fNoHiggs',process='tllq',pcard='tllq4fNoHiggs.dat',tdir='tllq-4f_template')
+tllq4fMatched = MGProcess(name='tllq4fMatched',process='tllq',pcard='tllq4fMatched.dat',tdir='tllq-4f_template')
+
+ttlnu    = MGProcess(name='ttlnu'   ,process='ttlnu',pcard='ttlnu.dat'   ,tdir='EFT-ttlnu_template')
+ttlnuJet = MGProcess(name='ttlnuJet',process='ttlnu',pcard='ttlnuJet.dat',tdir='ttlnuJet_template')
+
 
 ctp   = DegreeOfFreedom(name='ctp'  ,relations=[['ctp'] ,1.0])
 cpQM  = DegreeOfFreedom(name='cpQM' ,relations=[['cpQM'],1.0])
