@@ -37,17 +37,20 @@ class JobTracker(object):
         self.proc_filter = []       # A list of strings to compare against in order to filter out jobs from other batch runs
         self.tags_filter = []
         self.runs_filter = []
+
+        self.use_cached_update = False     # If true, then getRunningJobs() should return 
+
         self.update()
 
     def update(self):
         self.last_update = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        self.all = self.getJobs()               # A job is a string of the form: p_c_r
-        self.running = self.getRunningJobs(self.tarball_cutoff)
+        self.all = self.getJobs(no_cache=True)               # A job is a string of the form: p_c_r
+        self.finished = self.getFinishedJobs(no_cache=True)
+        self.running = self.getRunningJobs(no_cache=True)
         self.codegen = self.getCodeGenJobs()
         self.intg_full = self.getIntegrateJobs()
         self.intg_filter = self.getIntegrateJobs(self.intg_cutoff)
         self.stuck = self.getStuckJobs(self.stuck_cutoff)
-        self.finished = self.getFinishedJobs(self.tarball_cutoff)
 
     def setDirectory(self,fdir):
         self.fdir = fdr
@@ -110,6 +113,21 @@ class JobTracker(object):
         ret = run_process(['grep','-l','-e',rgx,fn],verbose=False)
         return bool(ret)
 
+    # Check if the job's .log file indicates that the codegen step failed
+    def failedCodegen(self,job,fdir='.'):
+        if not self.isJob(job):
+            return False
+        fn = os.path.join(fdir,job + '.log')
+        rgx = '^Process output directory %s not found\.' % (job)
+        ret = run_process(['grep','-l','-e',rgx,fn],verbose=False)
+        return bool(ret)
+
+    # The job produced a tarball, that stopped being modified sufficiently long ago
+    def finishedTarball(self,fn):
+        #b = self.hasTarball(fn,self.fdir) and (self.tarball_cutoff == -1 or self.getTarballTime(fn) > self.tarball_cutoff)
+        b = self.hasTarball(fn,self.fdir) and self.getTarballTime(fn) > self.tarball_cutoff
+        return b
+
     # Check if the job is still in the code gen phase
     def isCodeGen(self,chk_file,fdir='.'):
         arr = chk_file.split('_')
@@ -132,85 +150,87 @@ class JobTracker(object):
     def isStuck(self,fn):
         return (fn in self.stuck)
 
-    def isJob(self,file):
-        return (file in self.all)
+    def isJob(self,fn):
+        return (fn in self.all)
+
+    def isFinished(self,fn):
+        b = self.finishedTarball(fn) or self.failedCodegen(fn,self.fdir)
+        return b
 
     # Returns a list of all jobs (based on scanpoints.txt file)
-    def getJobs(self):
-        sp_files = self.getScanpointFiles(self.fdir)
-        jobs = []
-        for fn in sp_files:
-            arr = fn.split('_')
-            p,t,r = arr[:3]
-            # Skip jobs which don't match the job filters
-            if self.proc_filter and len(regex_match([p],self.proc_filter)) == 0: continue
-            if self.tags_filter and len(regex_match([t],self.tags_filter)) == 0: continue
-            if self.runs_filter and len(regex_match([r],self.runs_filter)) == 0: continue
-            jobs.append('_'.join(arr[:3]))
-        return jobs
+    def getJobs(self,no_cache=False):
+        if no_cache or not self.use_cached_update:
+            sp_files = self.getScanpointFiles(self.fdir)
+            jobs = set()
+            for fn in sp_files:
+                arr = fn.split('_')
+                p,t,r = arr[:3]
+                # Skip jobs which don't match the job filters
+                if self.proc_filter and len(regex_match([p],self.proc_filter)) == 0: continue
+                if self.tags_filter and len(regex_match([t],self.tags_filter)) == 0: continue
+                if self.runs_filter and len(regex_match([r],self.runs_filter)) == 0: continue
+                jobs.add('_'.join(arr[:3]))
+            return jobs
+        else:
+            return self.all
 
     # Returns a list of all jobs which have produced a tarball
-    def getFinishedJobs(self,cutoff=-1):
-        jobs = self.getJobs()
-        finished = []
-        for fn in jobs:
-            if self.hasTarball(fn,self.fdir):
-                t = self.getTarballTime(fn)
-                if cutoff > -1 and t < cutoff:
-                    # The tarball is still being made
-                    continue
-                finished.append(fn)
-        return finished
+    # NOTE: Should be mutually exclusive with getRunningJobs()
+    def getFinishedJobs(self,no_cache=False):
+        if no_cache or not self.use_cached_update:
+            jobs = self.getJobs(no_cache=True)
+            finished = set()
+            for fn in jobs:
+                if self.isFinished(fn):
+                    finished.add(fn)
+            return finished
+        else:
+            return self.finished
 
     # Returns a list of all jobs which have not yet produced a tarball
-    def getRunningJobs(self,cutoff=-1):
-        jobs = self.getJobs()
-        running = []
-        for fn in jobs:
-            if self.hasTarball(fn,self.fdir):
-                if cutoff > -1:
-                    t = self.getTarballTime(fn)
-                    if t > cutoff:
-                        # The tarball has finished being made
-                        continue
-                else:
-                    # Assume the job has finished as soon as the tarball gets made
-                    continue
-            running.append(fn)
-        return running
+    def getRunningJobs(self,no_cache=False):
+        if no_cache or not self.use_cached_update:
+            # Calculate the running jobs
+            jobs = self.getJobs(no_cache=True)
+            finished = self.getFinishedJobs()
+            running = jobs - finished   # returns all elements in jobs, but not in finished
+            return running
+        else:
+            # Just return number running from last update()
+            return self.running
 
     # Returns the subset of running jobs which are in the codegen phase
     def getCodeGenJobs(self):
         running = self.getRunningJobs()
-        subset  = []
+        subset  = set()
         for fn in running:
             if self.isCodeGen(fn,self.fdir):
-                subset.append(fn)
+                subset.add(fn)
         return subset
 
     # Returns the subset of running jobs which are in the integrate phase
     def getIntegrateJobs(self,cutoff=-1):
         running = self.getRunningJobs()
-        subset = []
+        subset = set()
         for fn in running:
             if self.isCodeGen(fn,self.fdir):
                 continue
             t = self.getIntegrateTime(fn)
             if cutoff > -1 and t > cutoff:
                 continue
-            subset.append(fn)
+            subset.add(fn)
         return subset
 
     # Checks for stuck jobs (Note: This only checks the .log file so won't catch jobs stuck in the CODEGEN phase)
     def getStuckJobs(self,cutoff):
-        subset = []
+        subset = set()
         if cutoff < 0:
             return subset
         running = self.getRunningJobs()
         for fn in running:
             t = self.getStuckTime(fn)
             if t > cutoff:
-                subset.append(fn)
+                subset.add(fn)
         return subset
 
     # Returns how long the job has been in the integrate phase
@@ -264,6 +284,7 @@ class JobTracker(object):
         return int(abs(fstats2.st_mtime - fstats1.st_mtime))
 
     # Returns the time (relative to now) since the file was last modified
+    # NOTE: Should always return > 0
     def getLastModifiedTime(self,fpath):
         if not os.path.exists(fpath):
             return 0
@@ -289,7 +310,7 @@ class JobTracker(object):
 
     def displayJobList(self,s,arr):
         print "%s Jobs: %d" % (s,len(arr))
-        for f in arr:
+        for f in sorted(arr):
             print "\t%s" % (f)
 
     def showJobs(self,wl=[]):
