@@ -1,6 +1,6 @@
 # This file was automatically created by FeynRules 2.3.29
-# Mathematica version: 10.2.0 for Linux x86 (64-bit) (July 28, 2015)
-# Date: Tue 19 Dec 2017 19:58:00
+# Mathematica version: 11.1.0 for Linux x86 (64-bit) (March 13, 2017)
+# Date: Wed 6 Jun 2018 14:05:51
 
 
 from object_library import all_lorentz, Lorentz
@@ -54,33 +54,37 @@ FFV3 = Lorentz(name = 'FFV3',
 
 FFV4 = Lorentz(name = 'FFV4',
                spins = [ 2, 2, 3 ],
-               structure = 'Gamma(3,2,-1)*ProjP(-1,1)')
+               structure = 'P(-1,3)*Gamma(-1,-2,-3)*Gamma(3,2,-2)*ProjM(-3,1) - P(-1,3)*Gamma(-1,2,-3)*Gamma(3,-3,-2)*ProjM(-2,1)')
 
 FFV5 = Lorentz(name = 'FFV5',
                spins = [ 2, 2, 3 ],
-               structure = 'Gamma(3,2,-1)*ProjM(-1,1) - 2*Gamma(3,2,-1)*ProjP(-1,1)')
+               structure = 'Gamma(3,2,-1)*ProjP(-1,1)')
 
 FFV6 = Lorentz(name = 'FFV6',
                spins = [ 2, 2, 3 ],
-               structure = 'Gamma(3,2,-1)*ProjM(-1,1) + Gamma(3,2,-1)*ProjP(-1,1)')
+               structure = 'Gamma(3,2,-1)*ProjM(-1,1) - 2*Gamma(3,2,-1)*ProjP(-1,1)')
 
 FFV7 = Lorentz(name = 'FFV7',
                spins = [ 2, 2, 3 ],
-               structure = 'Gamma(3,2,-1)*ProjM(-1,1) + 2*Gamma(3,2,-1)*ProjP(-1,1)')
+               structure = 'Gamma(3,2,-1)*ProjM(-1,1) + Gamma(3,2,-1)*ProjP(-1,1)')
 
 FFV8 = Lorentz(name = 'FFV8',
                spins = [ 2, 2, 3 ],
-               structure = 'Gamma(3,2,-1)*ProjM(-1,1) + 4*Gamma(3,2,-1)*ProjP(-1,1)')
+               structure = 'Gamma(3,2,-1)*ProjM(-1,1) + 2*Gamma(3,2,-1)*ProjP(-1,1)')
 
 FFV9 = Lorentz(name = 'FFV9',
                spins = [ 2, 2, 3 ],
-               structure = '-(P(-1,3)*Gamma(-1,2,-3)*Gamma(3,-3,-2)*ProjM(-2,1)) + P(-1,3)*Gamma(-1,-3,-2)*Gamma(3,2,-3)*ProjM(-2,1) + P(-1,3)*Gamma(-1,2,-3)*Gamma(3,-3,-2)*ProjP(-2,1) - P(-1,3)*Gamma(-1,-3,-2)*Gamma(3,2,-3)*ProjP(-2,1)')
+               structure = 'Gamma(3,2,-1)*ProjM(-1,1) + 4*Gamma(3,2,-1)*ProjP(-1,1)')
 
 FFV10 = Lorentz(name = 'FFV10',
                 spins = [ 2, 2, 3 ],
-                structure = '-(P(-1,3)*Gamma(-1,2,-3)*Gamma(3,-3,-2)*ProjP(-2,1)) + P(-1,3)*Gamma(-1,-3,-2)*Gamma(3,2,-3)*ProjP(-2,1)')
+                structure = '-(P(-1,3)*Gamma(-1,2,-3)*Gamma(3,-3,-2)*ProjM(-2,1)) + P(-1,3)*Gamma(-1,-3,-2)*Gamma(3,2,-3)*ProjM(-2,1) + P(-1,3)*Gamma(-1,2,-3)*Gamma(3,-3,-2)*ProjP(-2,1) - P(-1,3)*Gamma(-1,-3,-2)*Gamma(3,2,-3)*ProjP(-2,1)')
 
 FFV11 = Lorentz(name = 'FFV11',
+                spins = [ 2, 2, 3 ],
+                structure = '-(P(-1,3)*Gamma(-1,2,-3)*Gamma(3,-3,-2)*ProjP(-2,1)) + P(-1,3)*Gamma(-1,-3,-2)*Gamma(3,2,-3)*ProjP(-2,1)')
+
+FFV12 = Lorentz(name = 'FFV12',
                 spins = [ 2, 2, 3 ],
                 structure = '-(P(-1,3)*Gamma(-1,2,-3)*Gamma(3,-3,-2)*ProjM(-2,1)) + P(-1,3)*Gamma(-1,-3,-2)*Gamma(3,2,-3)*ProjM(-2,1) - P(-1,3)*Gamma(-1,2,-3)*Gamma(3,-3,-2)*ProjP(-2,1) + P(-1,3)*Gamma(-1,-3,-2)*Gamma(3,2,-3)*ProjP(-2,1)')
 
@@ -134,101 +138,73 @@ FFFF5 = Lorentz(name = 'FFFF5',
 
 FFFF6 = Lorentz(name = 'FFFF6',
                 spins = [ 2, 2, 2, 2 ],
-                structure = 'Gamma(-1,2,-3)*Gamma(-1,4,-2)*ProjM(-3,1)*ProjM(-2,3)')
+                structure = 'Gamma(-1,2,-2)*Gamma(-1,4,-3)*ProjM(-3,1)*ProjM(-2,3)')
 
 FFFF7 = Lorentz(name = 'FFFF7',
                 spins = [ 2, 2, 2, 2 ],
-                structure = 'Gamma(-1,2,-2)*Gamma(-1,4,-3)*ProjM(-3,1)*ProjM(-2,3)')
+                structure = 'Gamma(-1,2,-2)*Gamma(-1,4,-3)*ProjM(-3,3)*ProjM(-2,1)')
 
 FFFF8 = Lorentz(name = 'FFFF8',
                 spins = [ 2, 2, 2, 2 ],
-                structure = 'Gamma(-1,2,-2)*Gamma(-1,4,-3)*ProjM(-3,3)*ProjM(-2,1)')
+                structure = 'Gamma(-2,-6,-5)*Gamma(-2,-4,-3)*Gamma(-1,2,-4)*Gamma(-1,4,-6)*ProjM(-5,3)*ProjM(-3,1)')
 
 FFFF9 = Lorentz(name = 'FFFF9',
                 spins = [ 2, 2, 2, 2 ],
-                structure = 'Gamma(-2,-6,-5)*Gamma(-2,-4,-3)*Gamma(-1,2,-4)*Gamma(-1,4,-6)*ProjM(-5,3)*ProjM(-3,1)')
+                structure = 'ProjM(4,3)*ProjP(2,1)')
 
 FFFF10 = Lorentz(name = 'FFFF10',
                  spins = [ 2, 2, 2, 2 ],
-                 structure = 'ProjM(4,3)*ProjP(2,1)')
+                 structure = 'ProjP(2,3)*ProjP(4,1)')
 
 FFFF11 = Lorentz(name = 'FFFF11',
                  spins = [ 2, 2, 2, 2 ],
-                 structure = 'Gamma(-1,-3,-2)*Gamma(-1,4,-3)*ProjM(-2,3)*ProjP(2,1)')
+                 structure = 'ProjM(2,1)*ProjP(4,3)')
 
 FFFF12 = Lorentz(name = 'FFFF12',
                  spins = [ 2, 2, 2, 2 ],
-                 structure = 'ProjP(2,3)*ProjP(4,1)')
+                 structure = 'ProjP(2,1)*ProjP(4,3)')
 
 FFFF13 = Lorentz(name = 'FFFF13',
                  spins = [ 2, 2, 2, 2 ],
-                 structure = 'ProjM(2,1)*ProjP(4,3)')
+                 structure = 'Gamma(-1,-3,-2)*Gamma(-1,2,-3)*ProjP(-2,1)*ProjP(4,3)')
 
 FFFF14 = Lorentz(name = 'FFFF14',
                  spins = [ 2, 2, 2, 2 ],
-                 structure = 'Gamma(-1,-3,-2)*Gamma(-1,2,-3)*ProjM(-2,1)*ProjP(4,3)')
+                 structure = 'Gamma(-1,-3,-2)*Gamma(-1,4,-3)*ProjP(-2,3)*ProjP(2,1)')
 
 FFFF15 = Lorentz(name = 'FFFF15',
                  spins = [ 2, 2, 2, 2 ],
-                 structure = 'Gamma(-1,-2,-3)*Gamma(-1,2,-2)*ProjM(-3,1)*ProjP(4,3)')
+                 structure = 'Gamma(-1,2,-3)*Gamma(-1,4,-2)*ProjM(-2,3)*ProjP(-3,1)')
 
 FFFF16 = Lorentz(name = 'FFFF16',
                  spins = [ 2, 2, 2, 2 ],
-                 structure = 'ProjP(2,1)*ProjP(4,3)')
+                 structure = 'Gamma(-1,2,-2)*Gamma(-1,4,-3)*ProjM(-2,3)*ProjP(-3,1)')
 
 FFFF17 = Lorentz(name = 'FFFF17',
                  spins = [ 2, 2, 2, 2 ],
-                 structure = 'Gamma(-1,-3,-2)*Gamma(-1,2,-3)*ProjM(4,3)*ProjP(-2,1)')
+                 structure = 'Gamma(-1,-2,-3)*Gamma(-1,2,-2)*ProjP(-3,1)*ProjP(4,3)')
 
 FFFF18 = Lorentz(name = 'FFFF18',
                  spins = [ 2, 2, 2, 2 ],
-                 structure = 'Gamma(-1,-3,-2)*Gamma(-1,2,-3)*ProjP(-2,1)*ProjP(4,3)')
+                 structure = 'Gamma(-1,2,-3)*Gamma(-1,4,-2)*ProjP(-3,1)*ProjP(-2,3)')
 
 FFFF19 = Lorentz(name = 'FFFF19',
                  spins = [ 2, 2, 2, 2 ],
-                 structure = 'Gamma(-1,-3,-2)*Gamma(-1,4,-3)*ProjM(2,1)*ProjP(-2,3)')
+                 structure = 'Gamma(-1,2,-2)*Gamma(-1,4,-3)*ProjP(-3,1)*ProjP(-2,3)')
 
 FFFF20 = Lorentz(name = 'FFFF20',
                  spins = [ 2, 2, 2, 2 ],
-                 structure = 'Gamma(-1,-3,-2)*Gamma(-1,4,-3)*ProjP(-2,3)*ProjP(2,1)')
+                 structure = 'Gamma(-1,2,-3)*Gamma(-1,4,-2)*ProjM(-2,1)*ProjP(-3,3)')
 
 FFFF21 = Lorentz(name = 'FFFF21',
                  spins = [ 2, 2, 2, 2 ],
-                 structure = 'Gamma(-1,2,-3)*Gamma(-1,4,-2)*ProjM(-2,3)*ProjP(-3,1)')
+                 structure = 'Gamma(-1,2,-2)*Gamma(-1,4,-3)*ProjM(-2,1)*ProjP(-3,3)')
 
 FFFF22 = Lorentz(name = 'FFFF22',
                  spins = [ 2, 2, 2, 2 ],
-                 structure = 'Gamma(-1,2,-2)*Gamma(-1,4,-3)*ProjM(-2,3)*ProjP(-3,1)')
-
-FFFF23 = Lorentz(name = 'FFFF23',
-                 spins = [ 2, 2, 2, 2 ],
-                 structure = 'Gamma(-1,2,-2)*Gamma(-1,4,-3)*ProjP(-3,1)*ProjP(-2,3)')
-
-FFFF24 = Lorentz(name = 'FFFF24',
-                 spins = [ 2, 2, 2, 2 ],
-                 structure = 'Gamma(-1,2,-3)*Gamma(-1,4,-2)*ProjM(-2,1)*ProjP(-3,3)')
-
-FFFF25 = Lorentz(name = 'FFFF25',
-                 spins = [ 2, 2, 2, 2 ],
-                 structure = 'Gamma(-1,2,-2)*Gamma(-1,4,-3)*ProjM(-2,1)*ProjP(-3,3)')
-
-FFFF26 = Lorentz(name = 'FFFF26',
-                 spins = [ 2, 2, 2, 2 ],
                  structure = 'Gamma(-1,2,-2)*Gamma(-1,4,-3)*ProjP(-3,3)*ProjP(-2,1)')
 
-FFFF27 = Lorentz(name = 'FFFF27',
-                 spins = [ 2, 2, 2, 2 ],
-                 structure = 'Gamma(-2,-5,-4)*Gamma(-2,-3,-6)*Gamma(-1,2,-3)*Gamma(-1,4,-5)*ProjM(-6,1)*ProjP(-4,3)')
-
-FFFF28 = Lorentz(name = 'FFFF28',
-                 spins = [ 2, 2, 2, 2 ],
-                 structure = 'Gamma(-2,-6,-5)*Gamma(-2,-4,-3)*Gamma(-1,2,-6)*Gamma(-1,4,-4)*ProjM(-3,3)*ProjP(-5,1)')
-
-FFFF29 = Lorentz(name = 'FFFF29',
-                 spins = [ 2, 2, 2, 2 ],
-                 structure = 'Gamma(-2,-6,-5)*Gamma(-2,-4,-3)*Gamma(-1,2,-4)*Gamma(-1,4,-6)*ProjM(-3,1)*ProjP(-5,3)')
-
-FFFF30 = Lorentz(name = 'FFFF30',
+FFFF23 = Lorentz(name = 'FFFF23',
                  spins = [ 2, 2, 2, 2 ],
                  structure = 'Gamma(-2,-6,-5)*Gamma(-2,-4,-3)*Gamma(-1,2,-4)*Gamma(-1,4,-6)*ProjP(-5,3)*ProjP(-3,1)')
 
@@ -242,19 +218,27 @@ FFVS2 = Lorentz(name = 'FFVS2',
 
 FFVS3 = Lorentz(name = 'FFVS3',
                 spins = [ 2, 2, 3, 1 ],
-                structure = 'Gamma(3,2,-1)*ProjP(-1,1)')
+                structure = 'P(-1,3)*Gamma(-1,-2,-3)*Gamma(3,2,-2)*ProjM(-3,1) - P(-1,3)*Gamma(-1,2,-3)*Gamma(3,-3,-2)*ProjM(-2,1)')
 
 FFVS4 = Lorentz(name = 'FFVS4',
                 spins = [ 2, 2, 3, 1 ],
-                structure = '-(P(-1,3)*Gamma(-1,2,-3)*Gamma(3,-3,-2)*ProjM(-2,1)) + P(-1,3)*Gamma(-1,-3,-2)*Gamma(3,2,-3)*ProjM(-2,1) + P(-1,3)*Gamma(-1,2,-3)*Gamma(3,-3,-2)*ProjP(-2,1) - P(-1,3)*Gamma(-1,-3,-2)*Gamma(3,2,-3)*ProjP(-2,1)')
+                structure = 'Gamma(3,2,-1)*ProjP(-1,1)')
 
 FFVS5 = Lorentz(name = 'FFVS5',
                 spins = [ 2, 2, 3, 1 ],
-                structure = '-(P(-1,3)*Gamma(-1,2,-3)*Gamma(3,-3,-2)*ProjP(-2,1)) + P(-1,3)*Gamma(-1,-3,-2)*Gamma(3,2,-3)*ProjP(-2,1)')
+                structure = '-(P(-1,3)*Gamma(-1,2,-3)*Gamma(3,-3,-2)*ProjM(-2,1)) + P(-1,3)*Gamma(-1,-3,-2)*Gamma(3,2,-3)*ProjM(-2,1) + P(-1,3)*Gamma(-1,2,-3)*Gamma(3,-3,-2)*ProjP(-2,1) - P(-1,3)*Gamma(-1,-3,-2)*Gamma(3,2,-3)*ProjP(-2,1)')
 
 FFVS6 = Lorentz(name = 'FFVS6',
                 spins = [ 2, 2, 3, 1 ],
+                structure = '-(P(-1,3)*Gamma(-1,2,-3)*Gamma(3,-3,-2)*ProjP(-2,1)) + P(-1,3)*Gamma(-1,-3,-2)*Gamma(3,2,-3)*ProjP(-2,1)')
+
+FFVS7 = Lorentz(name = 'FFVS7',
+                spins = [ 2, 2, 3, 1 ],
                 structure = '-(P(-1,3)*Gamma(-1,2,-3)*Gamma(3,-3,-2)*ProjM(-2,1)) + P(-1,3)*Gamma(-1,-3,-2)*Gamma(3,2,-3)*ProjM(-2,1) - P(-1,3)*Gamma(-1,2,-3)*Gamma(3,-3,-2)*ProjP(-2,1) + P(-1,3)*Gamma(-1,-3,-2)*Gamma(3,2,-3)*ProjP(-2,1)')
+
+FFVS8 = Lorentz(name = 'FFVS8',
+                spins = [ 2, 2, 3, 1 ],
+                structure = 'P(-1,3)*Gamma(-1,-2,-3)*Gamma(3,2,-2)*ProjP(-3,1) - P(-1,3)*Gamma(-1,2,-3)*Gamma(3,-3,-2)*ProjP(-2,1)')
 
 FFVV1 = Lorentz(name = 'FFVV1',
                 spins = [ 2, 2, 3, 3 ],
