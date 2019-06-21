@@ -59,6 +59,7 @@ class Gridpack(object):
             'save_diagrams': False,         # Runs a modified version of the generation script that exits early to keep feynman diagrams
             'use_coupling_model': False,    # Use the 'coupling_orders' version of the dim6 model
             'coupling_string': None,        # If not None replaces "DIM6=1" with the specified string in the process card
+            'replace_model': None,          # If not None overwrites the import model line of the process card
             'flavor_scheme': 5,
             'default_limits': [-10,10]
         }
@@ -419,6 +420,11 @@ class Gridpack(object):
         if self.ops['use_coupling_model']:
             print "\tUsing each_coupling_order model!"
             run_process(['sed','-i','-e',"s|import model dim6top_LO_UFO|import model dim6top_LO_UFO_each_coupling_order|g",proc_tar])
+
+        if self.ops['replace_model']:
+            rep_model = self.ops['replace_model']
+            print "\tUsing %s model" % (rep_model)
+            run_process(['sed','-i','-e',"s|import model dim6top_LO_UFO|import model %s|g" % (rep_model),proc_tar])
 
         # Replace SUBSETUP in the process card
         run_process(['sed','-i','-e',"s|SUBSETUP|%s|g" % (setup),proc_tar])

@@ -24,7 +24,7 @@ ttWlnu   = MGProcess(name='ttWlnu'  ,process='ttWlnu',pcard='ttWlnu.dat'  ,tdir=
 tttt     = MGProcess(name='tttt'    ,process='tttt'  ,pcard='tttt.dat'    ,tdir='tttt_template')
 
 ttH      = MGProcess(name='ttH'     ,process='ttH',pcard='ttH.dat'     ,tdir='EFT-ttH_template')
-ttHJet   = MGProcess(name='ttHJet'  ,process='ttH',pcard='ttHJet.dat'  ,tdir='jets_template')
+#ttHJet   = MGProcess(name='ttHJet'  ,process='ttH',pcard='ttHJet.dat'  ,tdir='jets_template')
 ttHDecay = MGProcess(name='ttHDecay',process='ttH',pcard='ttHDecay.dat',tdir='defaultPDFs_template')
 
 ttHJetgg = MGProcess(name='ttHJetgg',process='ttH',pcard='ttHJetgg.dat',tdir='ttlnuJet_template')
@@ -42,7 +42,13 @@ tllq4fNoHiggs = MGProcess(name='tllq4fNoHiggs',process='tllq',pcard='tllq4fNoHig
 tllq4fMatched = MGProcess(name='tllq4fMatched',process='tllq',pcard='tllq4fMatched.dat',tdir='tllq-4f_template')
 
 ttlnu    = MGProcess(name='ttlnu'   ,process='ttlnu',pcard='ttlnu.dat'   ,tdir='EFT-ttlnu_template')
-ttlnuJet = MGProcess(name='ttlnuJet',process='ttlnu',pcard='ttlnuJet.dat',tdir='ttlnuJet_template')
+#ttlnuJet = MGProcess(name='ttlnuJet',process='ttlnu',pcard='ttlnuJet.dat',tdir='ttlnuJet_template')
+
+tllq4fMatchedNoHiggs = MGProcess(name='tllq4fMatchedNoHiggs',process='tllq' ,pcard='tllq4fMatchedNoHiggs.dat',tdir='tllq-4fMatched_template')
+ttlnuJet             = MGProcess(name='ttlnuJet'            ,process='ttlnu',pcard='ttlnuJet.dat'            ,tdir='ttlnuJet_template')
+ttHJet               = MGProcess(name='ttHJet'              ,process='ttH'  ,pcard='ttHJet.dat'              ,tdir='ttHJet_template')
+ttllNuNuJetNoHiggs   = MGProcess(name='ttllNuNuJetNoHiggs'  ,process='ttll' ,pcard='ttllNuNuJetNoHiggs.dat'  ,tdir='ttllJet_template')
+tHq4fMatched         = MGProcess(name='tHq4fMatched'        ,process='tHq'  ,pcard='tHq4fMatched.dat'        ,tdir='tllq-4fMatched_template')
 
 
 ctp   = DegreeOfFreedom(name='ctp'  ,relations=[['ctp'] ,1.0])
@@ -338,7 +344,7 @@ def main():
         'scanfiles/ttll_16DOldLimitsAxisScan_run1_scanpoints.txt',
         'scanfiles/ttll_16DOldLimitsAxisScan_run2_scanpoints.txt',
     ]
-    proc_list = [ttH]
+    proc_list = [tllq4fMatchedNoHiggs,ttlnuJet,ttHJet,ttllNuNuJetNoHiggs,tHq4fMatched]
     dof_list  = [
         ctp,cpQM,ctW,ctZ,ctG,cbW,cpQ3,cptb,cpt,
         cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi
@@ -350,6 +356,8 @@ def main():
     for dof in dof_list: sm_pt[dof.getName()] = 0.0
 
     gridpack = Gridpack(stype=stype,btype=btype,default_limits=[-20.0,20.0])
+    # For using a different model
+    #gridpack.setOptions(coupling_string="FCNC=0 DIM6=1",replace_mode="dim6top_LO_UFO_han")
     # For creating feynman diagrams
     #gridpack.setOptions(btype=BatchType.LOCAL,save_diagrams=True,use_coupling_model=True)
     #gridpack.setOptions(coupling_string="FCNC=0 DIM6^2=1 DIM6_ctZ^2=1 DIM6_ctW^2=1")
