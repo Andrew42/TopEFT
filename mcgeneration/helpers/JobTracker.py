@@ -40,7 +40,10 @@ class JobTracker(object):
 
         self.resubmitted_jobs = {}
 
-        self.use_cached_update = False     # If true, then getRunningJobs() should return 
+        self.use_cached_update = False     # If true, then getRunningJobs() should return
+
+        self.scram_arch = 'slc6_amd64_gcc630'
+        self.cmssw_release = 'CMSSW_9_3_0'
 
         self.update()
 
@@ -99,7 +102,8 @@ class JobTracker(object):
     def hasTarball(self,chk_file,fdir='.'):
         arr = chk_file.split('_')
         p,c,r = arr[:3]
-        fpath = os.path.join(fdir,"%s_%s_%s_slc6_amd64_gcc630_CMSSW_9_3_0_tarball.tar.xz" % (p,c,r))
+        tag_str = "{proc}_{coeff}_{run}".format(proc=p,coeff=c,run=r)
+        fpath = os.path.join(fdir,"{tag}_{scram_arch}_{release}_tarball.tar.xz".format(tag=tag_str,scram_arch=self.scram_arch,release=self.cmssw_release))
         return os.path.exists(fpath)
 
     # Check if the job's .log file contains an error line
@@ -141,10 +145,11 @@ class JobTracker(object):
     def isCodeGen(self,chk_file,fdir='.'):
         arr = chk_file.split('_')
         p,c,r = arr[:3]
-        log_fpath = os.path.join(fdir,"%s_%s_%s.log" % (p,c,r))
-        input_fpath = os.path.join(fdir,"input_%s_%s_%s.tar.gz" % (p,c,r))
-        codegen1_fpath = os.path.join(fdir,"codegen_%s_%s_%s.sh" % (p,c,r))
-        codegen2_fpath = os.path.join(fdir,"codegen_%s_%s_%s.jdl" % (p,c,r))
+        tag_str = "{proc}_{coeff}_{run}".format(proc=p,coeff=c,run=r)
+        log_fpath = os.path.join(fdir,"{tag}.log".format(tag=tag_str))
+        input_fpath = os.path.join(fdir,"input_{tag}.tar.gz".format(tag=tag_str))
+        codegen1_fpath = os.path.join(fdir,"codegen_{tag}.sh".format(tag=tag_str))
+        codegen2_fpath = os.path.join(fdir,"codegen_{tag}.jdl".format(tag=tag_str))
         if not os.path.exists(log_fpath):
             return True
         elif os.path.exists(input_fpath):
@@ -247,8 +252,9 @@ class JobTracker(object):
         if not self.isJob(fn):
             return 0
         p,c,r = fn.split('_')
-        fpath1 = os.path.join(self.fdir,"%s_%s_%s_codegen.log" % (p,c,r))
-        fpath2 = os.path.join(self.fdir,"%s_%s_%s.log" % (p,c,r))
+        tag_str = "{proc}_{coeff}_{run}".format(proc=p,coeff=c,run=r)
+        fpath1 = os.path.join(self.fdir,"{tag}_codegen.log".format(tag=tag_str))
+        fpath2 = os.path.join(self.fdir,"{tag}.log".format(tag=tag_str))
         return self.getModifiedTimeDifference(fpath2,fpath1)
 
     # Returns time since the log file was last updated (relative to now)
@@ -256,7 +262,8 @@ class JobTracker(object):
         if not self.isJob(fn):
             return 0
         p,c,r = fn.split('_')
-        fpath = os.path.join(self.fdir,"%s_%s_%s.log" % (p,c,r))
+        tag_str = "{proc}_{coeff}_{run}".format(proc=p,coeff=c,run=r)
+        fpath = os.path.join(self.fdir,"{tag}.log".format(tag=tag_str))
         return self.getLastModifiedTime(fpath)
 
     # Returns the time since the tarball file was last updated (relative to now)
@@ -264,7 +271,8 @@ class JobTracker(object):
         if not self.isJob(fn):
             return 0
         p,c,r = fn.split('_')
-        fpath = os.path.join(self.fdir,"%s_%s_%s_slc6_amd64_gcc630_CMSSW_9_3_0_tarball.tar.xz" % (p,c,r))
+        tag_str = "{proc}_{coeff}_{run}".format(proc=p,coeff=c,run=r)
+        fpath = os.path.join(self.fdir,"{tag}_{scram_arch}_{release}_tarball.tar.xz".format(tag=tag_str,scram_arch=self.scram_arch,release=self.cmssw_release))
         return self.getLastModifiedTime(fpath)
 
     # Returns the time the job spent in the codegen phase
@@ -273,14 +281,15 @@ class JobTracker(object):
         if not self.isJob(fn):
             return dt
         p,c,r = fn.split('_')
+        tag_str = "{proc}_{coeff}_{run}".format(proc=p,coeff=c,run=r)
         if fn in self.codegen:
             # The Job is still in the codegen phase --> use scanpoints file to determine time
-            fpath = os.path.join(self.fdir,"%s_%s_%s_scanpoints.txt" % (p,c,r))
+            fpath = os.path.join(self.fdir,"{tag}_scanpoints.txt".format(tag=tag_str))
             dt = self.getLastModifiedTime(fpath)
         else:
             # The job is out of the codegen phase
-            fpath1 = os.path.join(self.fdir,"%s_%s_%s_scanpoints.txt" % (p,c,r))
-            fpath2 = os.path.join(self.fdir,"%s_%s_%s_codegen.log" % (p,c,r))
+            fpath1 = os.path.join(self.fdir,"{tag}_scanpoints.txt".format(tag=tag_str))
+            fpath2 = os.path.join(self.fdir,"{tag}_codegen.log".format(tag=tag_str))
             dt = self.getModifiedTimeDifference(fpath2,fpath1)
         return dt
 
