@@ -24,7 +24,6 @@ ttWlnu   = MGProcess(name='ttWlnu'  ,process='ttWlnu',pcard='ttWlnu.dat'  ,tdir=
 tttt     = MGProcess(name='tttt'    ,process='tttt'  ,pcard='tttt.dat'    ,tdir='tttt_template')
 
 ttH      = MGProcess(name='ttH'     ,process='ttH',pcard='ttH.dat'     ,tdir='EFT-ttH_template')
-#ttHJet   = MGProcess(name='ttHJet'  ,process='ttH',pcard='ttHJet.dat'  ,tdir='jets_template')
 ttHDecay = MGProcess(name='ttHDecay',process='ttH',pcard='ttHDecay.dat',tdir='defaultPDFs_template')
 
 ttHJetgg = MGProcess(name='ttHJetgg',process='ttH',pcard='ttHJetgg.dat',tdir='ttlnuJet_template')
@@ -34,6 +33,8 @@ ttHJetqq = MGProcess(name='ttHJetqq',process='ttH',pcard='ttHJetqq.dat',tdir='tt
 ttll        = MGProcess(name='ttll'       ,process='ttll',pcard='ttll.dat'       ,tdir='EFT-ttll_template')
 ttllNoHiggs = MGProcess(name='ttllNoHiggs',process='ttll',pcard='ttllNoHiggs.dat',tdir='EFT-ttll_template')
 
+ttlnu = MGProcess(name='ttlnu',process='ttlnu',pcard='ttlnu.dat',tdir='EFT-ttlnu_template')
+
 tllq        = MGProcess(name='tllq'       ,process='tllq',pcard='tllq.dat'       ,tdir='EFT-tllq_template')
 tllqNoHiggs = MGProcess(name='tllqNoHiggs',process='tllq',pcard='tllqNoHiggs.dat',tdir='EFT-tllq_template')
 
@@ -42,8 +43,8 @@ tllq4fNoSchanW = MGProcess(name='tllq4fNoSchanW',process='tllq',pcard='tllq4fNoS
 tllq4fNoHiggs  = MGProcess(name='tllq4fNoHiggs' ,process='tllq',pcard='tllq4fNoHiggs.dat' ,tdir='tllq-4f_template')
 tllq4fMatched  = MGProcess(name='tllq4fMatched' ,process='tllq',pcard='tllq4fMatched.dat' ,tdir='tllq-4fMatched_template')
 
-ttlnu    = MGProcess(name='ttlnu'   ,process='ttlnu',pcard='ttlnu.dat'   ,tdir='EFT-ttlnu_template')
-#ttlnuJet = MGProcess(name='ttlnuJet',process='ttlnu',pcard='ttlnuJet.dat',tdir='ttlnuJet_template')
+tllq4fMatchedNoSchanW = MGProcess(name='tllq4fMatchedNoSchanW',process='tllq',pcard='tllq4fMatchedNoSchanW.dat',tdir='tllq-4fMatched_template')
+
 
 tllq4fMatchedNoHiggs = MGProcess(name='tllq4fMatchedNoHiggs',process='tllq' ,pcard='tllq4fMatchedNoHiggs.dat',tdir='tllq-4fMatched_template')
 ttlnuJet             = MGProcess(name='ttlnuJet'            ,process='ttlnu',pcard='ttlnuJet.dat'            ,tdir='ttlnuJet_template')
