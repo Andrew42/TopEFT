@@ -8,6 +8,8 @@ from ScanType import ScanType
 from DegreeOfFreedom import DegreeOfFreedom
 from helper_tools import *
 
+from CardEditor import MGRunCard, MGCustomizeCard
+
 # Class for configuring and setting up the submission for a single gridpack, can also run a produced gridpack tarball
 class Gridpack(object):
     #def __init__(self,process,limits_name,proc_card,template_dir,stype=ScanType.NONE,btype=BatchType.NONE):
@@ -66,6 +68,9 @@ class Gridpack(object):
 
         self.setOptions(**kwargs)
 
+        self.mg_runcard = None
+        self.mg_customizecard = None
+
         self.scan_pts = []
         self.is_configured = False
         return
@@ -103,6 +108,25 @@ class Gridpack(object):
             template_dir=p.getTemplateDir(),
             flavor_scheme=p.getFlavorScheme(self.CARD_DIR)
         )
+
+
+    def loadRuncard(self,cdir,cname):
+        """
+            Parses a MadGraph run card, which can then be modified independent
+            of the original template card
+        """
+        self.mg_runcard = MGRunCard(card_name=cname,card_dir=cdir)
+
+    def loadCustomizecard(self,cdir,cname):
+        """
+            Parses a customize card, which can then be modified independent
+            of the original template card
+        """
+        self.mg_customizecard = MGCustomizeCard(card_name=cname,card_dir=cdir)
+
+    def modifyRuncard(self,**ops):
+        for op,val in ops.iteritems():
+            self.mg_runcard.setOption(op,val)
 
     ################################################################################################
     def getSetupString(self):
@@ -159,22 +183,6 @@ class Gridpack(object):
         if create and not os.path.exists(target_dir):
             os.mkdir(target_dir)
         return target_dir
-
-    def exists(self):
-        """ 
-            Checks for the existence of certain files/directories in order to determine if this
-            gridpack configuration has already been produced (or is in the process of being produced)
-        """
-        if os.getcwd() != self.HOME_DIR:
-            err_str  = "Call to exists() when not in self.HOME_DIR!"
-            err_str += "\n\tself.HOME_DIR: %s" % (self.HOME_DIR)
-            err_str += "\n\tos.getcwd():   %s" % (os.getcwd())
-            raise RuntimeError(err_str)
-        has_setup_dir = os.path.exists(self.getSetupString())
-        has_tarball   = os.path.exists(self.getTarballString())
-        has_scanfile  = os.path.exists(self.getScanfileString())
-        has_gridrun   = os.path.exists(self.getGridrunOutputDirectory())
-        return (has_setup_dir or has_tarball or has_gridrun or has_scanfile)
 
     def limitSettings(self,header=True,depth=0):
         """ Print settings related to the limits used for setting values of the DoFs """
@@ -263,6 +271,22 @@ class Gridpack(object):
         return info
 
     ################################################################################################
+
+    def exists(self):
+        """ 
+            Checks for the existence of certain files/directories in order to determine if this
+            gridpack configuration has already been produced (or is in the process of being produced)
+        """
+        if os.getcwd() != self.HOME_DIR:
+            err_str  = "Call to exists() when not in self.HOME_DIR!"
+            err_str += "\n\tself.HOME_DIR: %s" % (self.HOME_DIR)
+            err_str += "\n\tos.getcwd():   %s" % (os.getcwd())
+            raise RuntimeError(err_str)
+        has_setup_dir = os.path.exists(self.getSetupString())
+        has_tarball   = os.path.exists(self.getTarballString())
+        has_scanfile  = os.path.exists(self.getScanfileString())
+        has_gridrun   = os.path.exists(self.getGridrunOutputDirectory())
+        return (has_setup_dir or has_tarball or has_gridrun or has_scanfile)
 
     def configure(self,tag,run,dofs,num_pts,start_pt={},scan_file=None):
         """ Parses options to produce gridpack in a particular way. """
