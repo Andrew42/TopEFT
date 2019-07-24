@@ -38,7 +38,7 @@ class JobTracker(object):
         self.tags_filter = []
         self.runs_filter = []
 
-        self.resubmitted_jobs = {}
+        self.resubmitted = {}
 
         self.use_cached_update = False     # If true, then getRunningJobs() should return
 
@@ -58,9 +58,9 @@ class JobTracker(object):
         self.stuck = self.getStuckJobs(self.stuck_cutoff)
 
     def addResubmit(self,job):
-        if not self.resubmitted_jobs.has_key(job):
-            self.resubmitted_jobs[job] = 0
-        self.resubmitted_jobs[job] += 1
+        if not self.resubmitted.has_key(job):
+            self.resubmitted[job] = 0
+        self.resubmitted[job] += 1
 
     def setDirectory(self,fdir):
         self.fdir = fdr
@@ -341,9 +341,9 @@ class JobTracker(object):
         if len(wl) == 0:
             wl = self.getJobTypes()
 
-        if len(self.resubmitted_jobs):
+        if len(self.resubmitted):
             print "Resubmitted Jobs:"
-            for k,v in self.resubmitted_jobs.iteritems():
+            for k,v in self.resubmitted.iteritems():
                 print "\t%s: %d" % (k,v)
 
         if self.RUNNING in wl:

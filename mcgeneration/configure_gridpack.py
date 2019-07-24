@@ -14,7 +14,7 @@ from helpers.Gridpack import Gridpack
 from helpers.MGProcess import MGProcess
 
 #voms-proxy-init -voms cms -valid 192:00
-#python configure_gridpack.py >& output.log &
+#nohup python configure_gridpack.py >& output.log &
 
 #NOTE: The template directory should contain run_card.dat and customizecards.dat files
 tHq      = MGProcess(name='tHq'     ,process='tHq'   ,pcard='tHq.dat'     ,tdir='EFT-tHq_template')
@@ -37,9 +37,10 @@ ttllNoHiggs = MGProcess(name='ttllNoHiggs',process='ttll',pcard='ttllNoHiggs.dat
 tllq        = MGProcess(name='tllq'       ,process='tllq',pcard='tllq.dat'       ,tdir='EFT-tllq_template')
 tllqNoHiggs = MGProcess(name='tllqNoHiggs',process='tllq',pcard='tllqNoHiggs.dat',tdir='EFT-tllq_template')
 
-tllq4f        = MGProcess(name='tllq4f'       ,process='tllq',pcard='tllq4f.dat'       ,tdir='tllq-4f_template')
-tllq4fNoHiggs = MGProcess(name='tllq4fNoHiggs',process='tllq',pcard='tllq4fNoHiggs.dat',tdir='tllq-4f_template')
-tllq4fMatched = MGProcess(name='tllq4fMatched',process='tllq',pcard='tllq4fMatched.dat',tdir='tllq-4f_template')
+tllq4f         = MGProcess(name='tllq4f'        ,process='tllq',pcard='tllq4f.dat'        ,tdir='tllq-4f_template')
+tllq4fNoSchanW = MGProcess(name='tllq4fNoSchanW',process='tllq',pcard='tllq4fNoSchanW.dat',tdir='tllq-4f_template')
+tllq4fNoHiggs  = MGProcess(name='tllq4fNoHiggs' ,process='tllq',pcard='tllq4fNoHiggs.dat' ,tdir='tllq-4f_template')
+tllq4fMatched  = MGProcess(name='tllq4fMatched' ,process='tllq',pcard='tllq4fMatched.dat' ,tdir='tllq-4fMatched_template')
 
 ttlnu    = MGProcess(name='ttlnu'   ,process='ttlnu',pcard='ttlnu.dat'   ,tdir='EFT-ttlnu_template')
 #ttlnuJet = MGProcess(name='ttlnuJet',process='ttlnu',pcard='ttlnuJet.dat',tdir='ttlnuJet_template')
@@ -111,7 +112,8 @@ def cmsconnect_chain_submit(gridpack,dofs,proc_list,tag_postfix,rwgt_pts,runs,st
     tracker = JobTracker(fdir=os.getcwd())
     max_gen = 5         # Max number of CODEGEN jobs to have running
     max_int = 7         # Max number of INTEGRATE jobs to have running
-    max_run = 50        # Max number of total jobs running
+    max_run = 25        # Max number of total jobs running
+    resubmits = 5       # Max number of times to try resubmitting a job
     int_cut = 45*60     # Time (relative to INTEGRATE step) before additional jobs can get submitted
     tar_cut = 5*60      # Time the tarball needs to go without being modified to qualify as complete
     delay = 5.0*60      # Time between checks
@@ -142,6 +144,9 @@ def cmsconnect_chain_submit(gridpack,dofs,proc_list,tag_postfix,rwgt_pts,runs,st
                 continue
             if tracker.getTarballTime(job) > 3*(tar_cut+delay):
                 # Skip checking jobs that finished sufficiently long ago
+                continue
+            if tracker.resubmitted.has_key(job) and tracker.resubmitted[job] >= resubmits:
+                # Stop trying to resubmit the job
                 continue
             p,c,r = job.split('_')
             p_obj = find_process(p,proc_list)
@@ -359,8 +364,8 @@ def main():
     # For using a different model
     #gridpack.setOptions(coupling_string="FCNC=0 DIM6=1",replace_mode="dim6top_LO_UFO_han")
     # For creating feynman diagrams
-    #gridpack.setOptions(btype=BatchType.LOCAL,save_diagrams=True,use_coupling_model=True)
-    #gridpack.setOptions(coupling_string="FCNC=0 DIM6^2=1 DIM6_ctZ^2=1 DIM6_ctW^2=1")
+    gridpack.setOptions(btype=BatchType.LOCAL,save_diagrams=True,use_coupling_model=True)
+    gridpack.setOptions(coupling_string="FCNC=0 DIM6^2=1 DIM6_ctZ^2=1 DIM6_ctW^2=1")
 
     if stype == ScanType.SLINSPACE:
         tag = tag + "AxisScan"
