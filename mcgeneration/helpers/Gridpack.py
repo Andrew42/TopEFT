@@ -95,8 +95,8 @@ class Gridpack(object):
     def setOptions(self,**kwargs):
         for op,v in kwargs.iteritems():
             if not self.hasOption(op):
-                print "[WARNING] Unable to set option. Unknown Option: %s" % (op)
-                continue
+                print "[ERROR] Unable to set option. Unknown Option: %s" % (op)
+                raise RuntimeError
             self.ops[op] = v
 
     # Change the process associated with this Gridpack object

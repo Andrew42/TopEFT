@@ -363,7 +363,7 @@ def main():
 
     gridpack = Gridpack(stype=stype,btype=btype,default_limits=[-20.0,20.0])
     # For using a different model
-    #gridpack.setOptions(coupling_string="FCNC=0 DIM6=1",replace_mode="dim6top_LO_UFO_han")
+    #gridpack.setOptions(coupling_string="FCNC=0 DIM6=1",replace_model="dim6top_LO_UFO_han")
     # For creating feynman diagrams
     gridpack.setOptions(btype=BatchType.LOCAL,save_diagrams=True,use_coupling_model=True)
     gridpack.setOptions(coupling_string="FCNC=0 DIM6^2=1 DIM6_ctZ^2=1 DIM6_ctW^2=1")
