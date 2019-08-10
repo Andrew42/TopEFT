@@ -132,7 +132,7 @@ class Gridpack(object):
         """
         setup = self.getSetupString()
         target_dir = self.getTargetDirectory(create=False)
-        fpath = os.path.join(target_dir,"%{setup}_{base}".format(setup=setup,base=self.MG_RUN_CARD))
+        fpath = os.path.join(target_dir,"{setup}_{base}".format(setup=setup,base=self.MG_RUN_CARD))
         self.mg_runcard.save(fpath,force=True)
         return fpath
 
@@ -159,7 +159,7 @@ class Gridpack(object):
         """
         setup = self.getSetupString()
         target_dir = self.getTargetDirectory(create=False)
-        fpath = os.path.join(target_dir,"%{setup}_{base}".format(setup=setup,base=self.MG_CUSTOM_CARD))
+        fpath = os.path.join(target_dir,"{setup}_{base}".format(setup=setup,base=self.MG_CUSTOM_CARD))
         self.mg_customizecard.save(fpath,force=True,indent=1)
         return fpath
 
@@ -188,7 +188,7 @@ class Gridpack(object):
             # Replace the amp order specification with a new custom one
             print "{ind}Custom Couplings: {couplings}".format(couplings=self.ops['coupling_string'],ind=indent_str)
             sed_str = "s|DIM6=1|{new}|g".format(new=self.ops['coupling_string'])
-            run_process(['sed','-i','-e',"s|DIM6=1|%s|g" % (self.ops['coupling_string']),fpath])
+            run_process(['sed','-i','-e',sed_str,fpath])
 
         if self.ops['use_coupling_model']:
             # Replace the default dim6 model with the 'each_coupling_order' version
@@ -239,7 +239,13 @@ class Gridpack(object):
     def getTarballString(self):
         """ Construct the tarball file string """
         setup = self.getSetupString()
-        return '%s_%s_%s_%s.%s' % (setup,self.CURR_ARCH,self.CURR_RELEASE,self.TARBALL_POSTFIX,self.TARBALL_TYPE)
+        return "{setup}_{arch}_{release}_{tarpostfix}.{tartype}".format(
+            setup=setup,
+            arch=self.CURR_ARCH,
+            release=self.CURR_RELEASE,
+            tarpostfix=self.TARBALL_POSTFIX,
+            tartype=self.TARBALL_TYPE
+        )
 
     def getScanfileString(self):
         """ Construct the scanpoints file string """
@@ -531,7 +537,7 @@ class Gridpack(object):
         if self.ops['flavor_scheme'] == 5:
             extra_customize_ops.append('set param_card MB 0.0')
             extra_customize_ops.append('set param_card ymb 0.0')
-        for c,dof in self.ops['coeffs']:
+        for c,dof in self.ops['coeffs'].iteritems():
             for k,v in dof.eval(dof.getStart()).iteritems():
                 extra_customize_ops.append('set param_card {wc} {val:.6f}'.format(wc=k,val=v))
         self.modifyCustomizeCard(*extra_customize_ops)
