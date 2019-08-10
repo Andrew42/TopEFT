@@ -4,7 +4,6 @@ import re
 
 from helper_tools import run_process
 
-# WIP
 class BaseCard(object):
     def __init__(self,card_dir,card_name):
         """
@@ -12,7 +11,7 @@ class BaseCard(object):
             card_name: The name of the original card as it appears in the directory
         """
         self.name = card_name   # Name of the card (e.g. run_card.dat)
-        self.cdir = card_dir
+        self.cdir = card_dir    # Location of the original card (e.g. the specific template dir)
 
         self.key_width = 0
         self.val_width = 0
@@ -94,8 +93,8 @@ class BaseCard(object):
 
     def dump(self):
         """
-            Basic method for printing all of the options of the card. Can be overloaded in derived
-            classes
+            Basic method for printing all of the options of the card. Can be reimplemented in the
+            derived classes
         """
         for k in self.list():
             v = self.__ops[k]
@@ -212,18 +211,19 @@ class MGCustomizeCard(BaseCard):
             v = self.getOption(k)
             print "[{0:>{w1}}] {1:<{w2}}".format(k,v,w1=self.key_width,w2=self.val_width)
 
-    def save(self,dst,force=False):
+    def save(self,dst,force=False,indent=0):
+        indent_str = " "*4*indent
         if os.path.exists(dst):
             if not os.path.isfile(dst):
-                s = "{dst} is not a file!".format(dst=dst)
+                s = "{ind}{dst} is not a file!".format(dst=dst,ind=indent_str)
                 raise RuntimeError(s)
             if force:
-                print "Removing {dst}...".format(dst=dst)
+                print "{ind}Removing {dst}...".format(dst=dst,ind=indent_str)
                 os.remove(dst)
             else:
-                s = "{file} already exists!".format(file=dst)
+                s = "{ind}{file} already exists!".format(file=dst,ind=indent_str)
                 raise RuntimeError(s)
-        print "Saving to {dst}...".format(dst=dst)
+        print "{ind}Saving to {dst}...".format(dst=dst,ind=indent_str)
         with open(dst,'w') as f:
             for k in self.list():
                 v = self.getOption(k)

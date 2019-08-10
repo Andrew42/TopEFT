@@ -356,17 +356,23 @@ def main():
         cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi
     ]
 
+    # Options that should overwrite w/e was set in the corresponding template run card
+    rc_ops = {
+        'run_tag': 'tag_1'  # This is just an example, since all template run cards already have this as the setting
+    }
+
     proc_run_wl = {}    # {proc_name: {dof_name: [runs] } }
     start_pt = {}       # {wc_name: val}
     sm_pt    = {}
     for dof in dof_list: sm_pt[dof.getName()] = 0.0
 
     gridpack = Gridpack(stype=stype,btype=btype,default_limits=[-20.0,20.0])
+    gridpack.setOptions(runcard_ops=rc_ops)
     # For using a different model
-    #gridpack.setOptions(coupling_string="FCNC=0 DIM6=1",replace_model="dim6top_LO_UFO_han")
+    gridpack.setOptions(coupling_string="FCNC=0 DIM6=1",replace_model="dim6top_LO_UFO_han")
     # For creating feynman diagrams
-    gridpack.setOptions(btype=BatchType.LOCAL,save_diagrams=True,use_coupling_model=True)
-    gridpack.setOptions(coupling_string="FCNC=0 DIM6^2=1 DIM6_ctZ^2=1 DIM6_ctW^2=1")
+    #gridpack.setOptions(btype=BatchType.LOCAL,save_diagrams=True,use_coupling_model=True)
+    #gridpack.setOptions(coupling_string="FCNC=0 DIM6^2=1 DIM6_ctZ^2=1 DIM6_ctW^2=1")
 
     if stype == ScanType.SLINSPACE:
         tag = tag + "AxisScan"

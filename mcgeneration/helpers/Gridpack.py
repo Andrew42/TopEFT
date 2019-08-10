@@ -55,6 +55,7 @@ class Gridpack(object):
             'coeffs': [],
             'start_pt': {},
             'num_rwgt_pts': 0,
+            'runcard_ops': {},              # Options that should be used to overwrite in the run_card.dat file
             'limits_name': None,            # The process name as it appears in the limits file
             'process_card': None,           # The name of the process card to be used (e.g. ttHDecay.dat)
             'template_dir': None,           # The path (relative to the CARD_DIR) to the dir with the template run and customize cards
@@ -63,7 +64,7 @@ class Gridpack(object):
             'coupling_string': None,        # If not None replaces "DIM6=1" with the specified string in the process card
             'replace_model': None,          # If not None overwrites the import model line of the process card
             'flavor_scheme': 5,
-            'default_limits': [-10,10]
+            'default_limits': [-10,10],
         }
 
         self.setOptions(**kwargs)
@@ -95,7 +96,7 @@ class Gridpack(object):
     def setOptions(self,**kwargs):
         for op,v in kwargs.iteritems():
             if not self.hasOption(op):
-                print "[ERROR] Unable to set option. Unknown Option: %s" % (op)
+                print "[ERROR] Unable to set option. Unknown Option: {op}".format(op=op)
                 raise RuntimeError
             self.ops[op] = v
 
@@ -109,29 +110,131 @@ class Gridpack(object):
             flavor_scheme=p.getFlavorScheme(self.CARD_DIR)
         )
 
-
-    def loadRuncard(self,cdir,cname):
+    def loadRunCard(self):
         """
             Parses a MadGraph run card, which can then be modified independent
             of the original template card
         """
-        self.mg_runcard = MGRunCard(card_name=cname,card_dir=cdir)
+        cdir = os.path.join(self.HOME_DIR,self.CARD_DIR,self.ops['template_dir'])
+        self.mg_runcard = MGRunCard(card_name=self.MG_RUN_CARD,card_dir=cdir)
 
-    def loadCustomizecard(self,cdir,cname):
+    def modifyRunCard(self,**ops):
+        for op,val in ops.iteritems():
+            if not self.mg_runcard.hasOption(op):
+                print "[ERROR] Unknown run card option: {op}".format(op=op)
+                raise RuntimeError
+            self.mg_runcard.setOption(op,val)
+
+    def saveRunCard(self):
+        """
+            Save the run card to the specified location, overwriting any pre-existing
+            card in that location
+        """
+        setup = self.getSetupString()
+        target_dir = self.getTargetDirectory(create=False)
+        fpath = os.path.join(target_dir,"%{setup}_{base}".format(setup=setup,base=self.MG_RUN_CARD))
+        self.mg_runcard.save(fpath,force=True)
+        return fpath
+
+    def loadCustomizeCard(self):
         """
             Parses a customize card, which can then be modified independent
             of the original template card
         """
-        self.mg_customizecard = MGCustomizeCard(card_name=cname,card_dir=cdir)
+        cdir = os.path.join(self.HOME_DIR,self.CARD_DIR,self.ops['template_dir'])
+        self.mg_customizecard = MGCustomizeCard(card_name=self.MG_CUSTOM_CARD,card_dir=cdir)
 
-    def modifyRuncard(self,**ops):
-        for op,val in ops.iteritems():
-            self.mg_runcard.setOption(op,val)
+    def modifyCustomizeCard(self,*ops):
+        """
+            Appends additional options to the customize card. The inputs should each be strings
+            of fully formed valid customize card options
+        """
+        for op in ops:
+            self.mg_customizecard.setOption(op)
+
+    def saveCustomizeCard(self):
+        """
+            Save the customize card to the appropriate location, overwriting any pre-existing
+            card in that location
+        """
+        setup = self.getSetupString()
+        target_dir = self.getTargetDirectory(create=False)
+        fpath = os.path.join(target_dir,"%{setup}_{base}".format(setup=setup,base=self.MG_CUSTOM_CARD))
+        self.mg_customizecard.save(fpath,force=True,indent=1)
+        return fpath
+
+    def saveProcessCard(self,indent=0):
+        """
+            Save the process card to the appropriate location, overwriting any pre-existing
+            card in that location
+
+            NOTE: This function does a lot of stuff related to modifying the process card after
+                it gets copied to the setup location
+        """
+        indent_str = " "*4*indent
+
+        setup = self.getSetupString()
+        target_dir = self.getTargetDirectory(create=False)
+        proc_src = os.path.join(self.HOME_DIR,self.PROC_CARD_DIR,self.ops['process_card'])
+        fpath = os.path.join(target_dir,"{setup}_{base}".format(setup=setup,base=self.MG_PROC_CARD))
+        shutil.copy(proc_src,fpath)
+
+        if self.ops['save_diagrams']:
+            # Remove the nojpeg option from the output line of the process card
+            print "{ind}Saving diagrams!".format(ind=indent_str)
+            run_process(['sed','-i','-e',"s|SUBSETUP -nojpeg|SUBSETUP|g",fpath])
+
+        if not self.ops['coupling_string'] is None:
+            # Replace the amp order specification with a new custom one
+            print "{ind}Custom Couplings: {couplings}".format(couplings=self.ops['coupling_string'],ind=indent_str)
+            sed_str = "s|DIM6=1|{new}|g".format(new=self.ops['coupling_string'])
+            run_process(['sed','-i','-e',"s|DIM6=1|%s|g" % (self.ops['coupling_string']),fpath])
+
+        if self.ops['use_coupling_model']:
+            # Replace the default dim6 model with the 'each_coupling_order' version
+            # NOTE: This will overwrite the 'replace_model' option
+            print "{ind}Using each_coupling_order model!".format(ind=indent_str)
+            old = "dim6top_LO_UFO"
+            new = "dim6top_LO_UFO_each_coupling_order"
+            sed_str = "s|import model {old}|import model {new}|g".format(old=old,new=new)
+            run_process(['sed','-i','-e',sed_str,fpath])
+
+        if self.ops['replace_model']:
+            rep_model = self.ops['replace_model']
+            print "{ind}Using {model} model".format(model=rep_model,ind=indent_str)
+            old = "dim6top_LO_UFO"
+            sed_str = "s|import model {old}|import model {new}|g".format(old=old,new=rep_model)
+            run_process(['sed','-i','-e',sed_str,fpath])
+
+        # Replace SUBSETUP in the process card with the correct name
+        sed_str = "s|SUBSETUP|{setup}|g".format(setup=setup)
+        run_process(['sed','-i','-e',sed_str,fpath])
+        return fpath
+
+    def saveReweightCard(self):
+        """
+            Save the reweight card to the appropriate location, overwriting any pre-existing
+            card in that location. This function currently does a lot of things, should probably
+            break it up...
+        """
+        setup = self.getSetupString()
+        target_dir = self.getTargetDirectory(create=False)
+
+        scanfile = self.getScanfileString()
+        rwgt_tar = os.path.join(target_dir,"{setup}_{base}".format(setup=setup,base=self.MG_REWEIGHT_CARD))
+        
+        if len(self.scan_pts) == 0:
+            self.scan_pts = ScanType.getPoints(self.ops['coeffs'],self.ops['num_rwgt_pts'],self.ops['stype'])
+
+        save_scan_points(scanfile,self.ops['coeffs'],self.scan_pts)
+        make_reweight_card(rwgt_tar,self.ops['coeffs'],self.scan_pts)
+
+        return rwgt_tar
 
     ################################################################################################
     def getSetupString(self):
         """ Construct the gridpack setup string (basically the name of the gridpack) """
-        return "%s_%s_run%d" % (self.ops['process'],self.ops['tag'],self.ops['run'])
+        return "{proc}_{tag}_run{N:d}".format(proc=self.ops['process'],tag=self.ops['tag'],N=self.ops['run'])
 
     def getTarballString(self):
         """ Construct the tarball file string """
@@ -370,7 +473,7 @@ class Gridpack(object):
         self.is_configured = True
         return
 
-    def setup(self):
+    def setup(self,indent=0):
         """
             Sets up and/or creates the needed directories and files need for creating a gridpack
             using the genproductions framework
@@ -380,78 +483,91 @@ class Gridpack(object):
 
         os.chdir(self.HOME_DIR)
 
+        setup = self.getSetupString()
         if self.exists():
-            print "Skipping gridpack setup: %s" % (self.getSetupString())
+            print "{0:>{w}}Skipping gridpack setup: {setup}".format("",setup=setup,w=4*indent)
             return False
 
         if self.ops['save_diagrams'] and self.ops['btype'] != BatchType.LOCAL:
-            print "[ERROR] Invalid BatchType for saving diagrams: %s" % (self.ops['btype'])
+            print "[ERROR] Invalid BatchType for saving diagrams: {btype}".format(btype=self.ops['btype'])
             return False
 
         if self.ops['stype'] == ScanType.NONE:
             # Don't do any reweighting
             self.scan_pts = []
 
-        print "Setup gridpack: %s..." % (self.getSetupString())
+        print "{0:>{w}}Setup gridpack: {setup}...".format("",setup=setup,w=4*indent)
 
         # Set the random seed adding extra events to the pilotrun
+        # NOTE: This physically modifies the gridpack generation script
         seed = int(random.uniform(1,1e6))
-        print "\tSeed: %d" % (seed)
-        run_process(['sed','-i','-e',"s|RWSEED=[0-9]*|RWSEED=%d|g" % (seed),self.GENPROD_SCRIPT])
+        print "{ind:>{w}}Seed: {seed:d}".format(seed=seed,ind="",w=4*(indent+1))
+        sed_str = "s|RWSEED=[0-9]*|RWSEED={seed:d}|g".format(seed=seed)
+        run_process(['sed','-i','-e',sed_str,self.GENPROD_SCRIPT])
 
         target_dir = self.getTargetDirectory(create=False)
         if os.path.exists(target_dir):
-            print "\tNOTE: The cards directory already exists, will overwrite existing cards."
+            print "{0:>{w}}NOTE: The cards directory already exists, will overwrite existing cards.".format("",w=4*(indent+1))
         else:
             # Create the needed directories
             self.getTargetDirectory(create=True)
 
-        setup = self.getSetupString()
+        #customize_src = os.path.join(self.HOME_DIR,self.CARD_DIR,self.ops['template_dir'],self.MG_CUSTOM_CARD)
+        #customize_tar = os.path.join(target_dir,"%s_%s" % (setup,self.MG_CUSTOM_CARD))
+        #shutil.copy(customize_src,customize_tar)
 
-        customize_src = os.path.join(self.HOME_DIR,self.CARD_DIR,self.ops['template_dir'],self.MG_CUSTOM_CARD)
-        customize_tar = os.path.join(target_dir,"%s_%s" % (setup,self.MG_CUSTOM_CARD))
-        shutil.copy(customize_src,customize_tar)
+        #run_src = os.path.join(self.HOME_DIR,self.CARD_DIR,self.ops['template_dir'],self.MG_RUN_CARD)
+        #run_tar = os.path.join(target_dir,"%s_%s" % (setup,self.MG_RUN_CARD))
+        #shutil.copy(run_src,run_tar)
 
-        run_src = os.path.join(self.HOME_DIR,self.CARD_DIR,self.ops['template_dir'],self.MG_RUN_CARD)
-        run_tar = os.path.join(target_dir,"%s_%s" % (setup,self.MG_RUN_CARD))
-        shutil.copy(run_src,run_tar)
+        #proc_src = os.path.join(self.HOME_DIR,self.PROC_CARD_DIR,self.ops['process_card'])
+        #proc_tar = os.path.join(target_dir,"{setup}_{base}".format(setup=setup,base=self.MG_PROC_CARD))
+        #shutil.copy(proc_src,proc_tar)
 
-        proc_src = os.path.join(self.HOME_DIR,self.PROC_CARD_DIR,self.ops['process_card'])
-        proc_tar = os.path.join(target_dir,"%s_%s" % (setup,self.MG_PROC_CARD))
-        shutil.copy(proc_src,proc_tar)
+        self.loadCustomizeCard()
+        self.loadRunCard()
+
+        extra_customize_ops = []
+        if self.ops['flavor_scheme'] == 5:
+            extra_customize_ops.append('set param_card MB 0.0')
+            extra_customize_ops.append('set param_card ymb 0.0')
+        for c,dof in self.ops['coeffs']:
+            for k,v in dof.eval(dof.getStart()).iteritems():
+                extra_customize_ops.append('set param_card {wc} {val:.6f}'.format(wc=k,val=v))
+        self.modifyCustomizeCard(*extra_customize_ops)
+        self.modifyRunCard(**self.ops['runcard_ops'])
+
+        customize_tar = self.saveCustomizeCard()
+        run_tar       = self.saveRunCard()
+        rwgt_tar      = self.saveReweightCard()                 # NOTE: Can potentially modify self.scan_pts
+        proc_tar      = self.saveProcessCard(indent=indent+1)   # NOTE: This makes a lot of modifcations to the card after copying
 
         # Sets the initial WC phase space point for MadGraph to start from (appends to customize card)
-        set_initial_point(customize_tar,self.ops['coeffs'],flavor_scheme=self.ops['flavor_scheme'])
+        #set_initial_point(customize_tar,self.ops['coeffs'],flavor_scheme=self.ops['flavor_scheme'])
 
-        scanfile = self.getScanfileString()
-        rwgt_tar = os.path.join(target_dir,"%s_%s" % (setup,self.MG_REWEIGHT_CARD))
-        
-        if len(self.scan_pts) == 0:
-            self.scan_pts = ScanType.getPoints(self.ops['coeffs'],self.ops['num_rwgt_pts'],self.ops['stype'])
+        #scanfile = self.getScanfileString()
+        #rwgt_tar = os.path.join(target_dir,"%s_%s" % (setup,self.MG_REWEIGHT_CARD))
+        #if len(self.scan_pts) == 0:
+        #    self.scan_pts = ScanType.getPoints(self.ops['coeffs'],self.ops['num_rwgt_pts'],self.ops['stype'])
+        #save_scan_points(scanfile,self.ops['coeffs'],self.scan_pts)
+        #make_reweight_card(rwgt_tar,self.ops['coeffs'],self.scan_pts)
 
-        save_scan_points(scanfile,self.ops['coeffs'],self.scan_pts)
-        make_reweight_card(rwgt_tar,self.ops['coeffs'],self.scan_pts)
-
-        if self.ops['save_diagrams']:
-            # Remove the nojpeg option from the output line of the process card
-            print "\tSaving diagrams!"
-            run_process(['sed','-i','-e',"s|SUBSETUP -nojpeg|SUBSETUP|g",proc_tar])
-
-        if not self.ops['coupling_string'] is None:
-            print "\tCustom Couplings: %s" % (self.ops['coupling_string'])
-            run_process(['sed','-i','-e',"s|DIM6=1|%s|g" % (self.ops['coupling_string']),proc_tar])
-
-        if self.ops['use_coupling_model']:
-            print "\tUsing each_coupling_order model!"
-            run_process(['sed','-i','-e',"s|import model dim6top_LO_UFO|import model dim6top_LO_UFO_each_coupling_order|g",proc_tar])
-
-        if self.ops['replace_model']:
-            rep_model = self.ops['replace_model']
-            print "\tUsing %s model" % (rep_model)
-            run_process(['sed','-i','-e',"s|import model dim6top_LO_UFO|import model %s|g" % (rep_model),proc_tar])
-
-        # Replace SUBSETUP in the process card
-        run_process(['sed','-i','-e',"s|SUBSETUP|%s|g" % (setup),proc_tar])
+        #if self.ops['save_diagrams']:
+        #    # Remove the nojpeg option from the output line of the process card
+        #    print "\tSaving diagrams!"
+        #    run_process(['sed','-i','-e',"s|SUBSETUP -nojpeg|SUBSETUP|g",proc_tar])
+        #if not self.ops['coupling_string'] is None:
+        #    print "\tCustom Couplings: %s" % (self.ops['coupling_string'])
+        #    run_process(['sed','-i','-e',"s|DIM6=1|%s|g" % (self.ops['coupling_string']),proc_tar])
+        #if self.ops['use_coupling_model']:
+        #    print "\tUsing each_coupling_order model!"
+        #    run_process(['sed','-i','-e',"s|import model dim6top_LO_UFO|import model dim6top_LO_UFO_each_coupling_order|g",proc_tar])
+        #if self.ops['replace_model']:
+        #    rep_model = self.ops['replace_model']
+        #    print "\tUsing %s model" % (rep_model)
+        #    run_process(['sed','-i','-e',"s|import model dim6top_LO_UFO|import model %s|g" % (rep_model),proc_tar])
+        ## Replace SUBSETUP in the process card
+        #run_process(['sed','-i','-e',"s|SUBSETUP|%s|g" % (setup),proc_tar])
         return True
 
     def clean(self):
@@ -539,7 +655,14 @@ class Gridpack(object):
             debug_file = "%s.debug" % (setup)
             cmsconnect_cores = 1
             print '\tCurrent PATH: {0}'.format(os.getcwd())
-            print '\tWill execute: ./submit_cmsconnect_gridpack_generation.sh {0} {1} {2} "{3}" {4} {5}'.format(setup,target_dir,str(cmsconnect_cores), "15 Gb",self.CURR_ARCH,self.CURR_RELEASE)
+            print '\tWill execute: ./submit_cmsconnect_gridpack_generation.sh {setup} {dir} {cores} "{mem}" {arch} {release}'.format(
+                setup=setup,
+                dir=target_dir,
+                cores=str(cmsconnect_cores),
+                mem="15 Gb",
+                arch=self.CURR_ARCH,
+                release=self.CURR_RELEASE
+            )
             subprocess.Popen(
                 ["./submit_cmsconnect_gridpack_generation.sh",setup,target_dir,str(cmsconnect_cores),"15 Gb",self.CURR_ARCH,self.CURR_RELEASE],
                 stdout=open(debug_file,'w'),
