@@ -7,6 +7,9 @@ from helpers.helper_tools import regex_match,run_process
 # voms-proxy-init -voms cms -valid 192:00
 
 MAX_TRANSFERS = 999  # Limit the number of transfers per code running
+USERNAME = 'awightma'
+SUB_DIR = '2019_04_19'
+
 def main():
     dry_run = True
 
@@ -15,8 +18,8 @@ def main():
 
     protocol = 'gsiftp://'
     tar_host = 'deepthought.crc.nd.edu'
-    tar_dir = '/store/user/awightma/gridpack_scans/2019_04_19/'
-    sub_dir = '/scanpoints/'
+    tar_dir = '/store/user/{user}/gridpack_scans/{subdir}/'.format(user=USERNAME,subdir=SUB_DIR)
+    scan_dir = '/scanpoints/'
     failed_copies = []
     good_copies = []
 
@@ -34,7 +37,7 @@ def main():
         bad_copy = False
         remote_fn = protocol+tar_host+tar_dir+fn
         if "_scanpoints.txt" in fn:
-            remote_fn = protocol+tar_host+tar_dir+sub_dir+fn
+            remote_fn = protocol+tar_host+tar_dir+scan_dir+fn
 
         print "#"*100
         print "[%d/%d] Transfering File: %s" % (idx+1,len(transfer_files),fn)
