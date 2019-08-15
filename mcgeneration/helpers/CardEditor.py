@@ -77,7 +77,7 @@ class BaseCard(object):
         if not self.hasOption(k):
             self.key_width = max(self.key_width,len(k))
             self.__ord.append(k)
-        self.val_width = max(self.val_width,len(v))
+        self.val_width = max(self.val_width,len(str(v)))
         self.__ops[k] = str(v)
 
     def getOption(self,k):
