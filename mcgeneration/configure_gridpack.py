@@ -245,11 +245,15 @@ def submit_1dim_jobs(gp,dofs,npts,runs,tag_postfix='',max_submits=-1,run_wl={}):
     delay    =  10.0   # Time between successful submits (in seconds)
     wc_limits = parse_limit_file(os.path.join("addons/limits","dim6top_LO_UFO_limits.txt"))
     for dof in dofs:
-        dof_subset = [dof]
         dof_name = dof.getName()
-        lim_key = gp.getOption('process') + '_' + dof_name
+        lim_key = "{process}_{wc}".format(process=gp.getOption('process'),wc=dof_name)
         tag = dof_name + tag_postfix
-        if wc_limits.has_key(lim_key):
+        if dof.hasLimits():
+            # The dof already has limits, re-use them
+            low_lim = dof.getLow()
+            high_lim = dof.getHigh()
+        elif wc_limits.has_key(lim_key):
+            # Use limits from the limits file for this process
             low_lim  = round(wc_limits[lim_key][0],6)
             high_lim = round(wc_limits[lim_key][1],6)
         else:
@@ -258,13 +262,12 @@ def submit_1dim_jobs(gp,dofs,npts,runs,tag_postfix='',max_submits=-1,run_wl={}):
             if run_wl.has_key(dof_name) and idx not in run_wl[dof_name]:
                 continue
             pt = {}
-            for dof in dof_subset:
-                pt[dof.getName()] = start
-                dof.setLimits(start,low_lim,high_lim)  # Manually set the limits
+            pt[dof.getName()] = start
+            dof.setLimits(start,low_lim,high_lim)
             gp.configure(
                 tag=tag,
                 run=idx,
-                dofs=dof_subset,
+                dofs=[dof],
                 num_pts=npts,
                 start_pt=pt
             )
