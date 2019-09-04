@@ -2163,7 +2163,7 @@ GC_538 = Coupling(name = 'GC_538',
 
 GC_539 = Coupling(name = 'GC_539',
                   value = '(ctG*G*complex(0,1))/(Lambda**2*cmath.sqrt(2))',
-                  order = {'DIM6':1,'QCD':1',QED':1})
+                  order = {'DIM6':1,'QCD':1,'QED':1})
 
 GC_540 = Coupling(name = 'GC_540',
                   value = 'ctGI*G/(Lambda**2*cmath.sqrt(2))',
