@@ -26,9 +26,9 @@ tttt     = MGProcess(name='tttt'    ,process='tttt'  ,pcard='tttt.dat'    ,tdir=
 ttH      = MGProcess(name='ttH'     ,process='ttH',pcard='ttH.dat'     ,tdir='EFT-ttH_template')
 ttHDecay = MGProcess(name='ttHDecay',process='ttH',pcard='ttHDecay.dat',tdir='defaultPDFs_template')
 
-ttHJetgg = MGProcess(name='ttHJetgg',process='ttH',pcard='ttHJetgg.dat',tdir='ttlnuJet_template')
-ttHJetgq = MGProcess(name='ttHJetgq',process='ttH',pcard='ttHJetgq.dat',tdir='ttlnuJet_template')
-ttHJetqq = MGProcess(name='ttHJetqq',process='ttH',pcard='ttHJetqq.dat',tdir='ttlnuJet_template')
+ttHJetgg = MGProcess(name='ttHJetgg',process='ttH',pcard='ttHJetgg.dat',tdir='ttHJet_template')
+ttHJetgq = MGProcess(name='ttHJetgq',process='ttH',pcard='ttHJetgq.dat',tdir='ttHJet_template')
+ttHJetqq = MGProcess(name='ttHJetqq',process='ttH',pcard='ttHJetqq.dat',tdir='ttHJet_template')
 
 ttll        = MGProcess(name='ttll'       ,process='ttll',pcard='ttll.dat'       ,tdir='EFT-ttll_template')
 ttllNoHiggs = MGProcess(name='ttllNoHiggs',process='ttll',pcard='ttllNoHiggs.dat',tdir='EFT-ttll_template')
