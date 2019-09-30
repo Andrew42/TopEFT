@@ -45,7 +45,7 @@ tllq4fMatched  = MGProcess(name='tllq4fMatched' ,process='tllq',pcard='tllq4fMat
 
 tllq4fMatchedNoSchanW  = MGProcess(name='tllq4fMatchedNoSchanW' ,process='tllq',pcard='tllq4fMatchedNoSchanW.dat' ,tdir='tllq-4fMatched_template')
 tllq4fNoSchanWJet      = MGProcess(name='tllq4fNoSchanWJet'     ,process='tllq',pcard='tllq4fNoSchanWJet.dat'     ,tdir='tllq-4fMatched_template')
-tllq4fNoSchanWJ1etOnly = MGProcess(name='tllq4fNoSchanWJ1etOnly',process='tllq',pcard='tllq4fNoSchanWJ1etOnly.dat',tdir='tllq-4fMatched_template')
+tllq4fNoSchanW1JetOnly = MGProcess(name='tllq4fNoSchanW1JetOnly',process='tllq',pcard='tllq4fNoSchanW1JetOnly.dat',tdir='tllq-4fMatched_template')
 
 tllq4fMatchedNoHiggs = MGProcess(name='tllq4fMatchedNoHiggs',process='tllq' ,pcard='tllq4fMatchedNoHiggs.dat',tdir='tllq-4fMatched_template')
 ttlnuJet             = MGProcess(name='ttlnuJet'            ,process='ttlnu',pcard='ttlnuJet.dat'            ,tdir='ttlnuJet_template')
