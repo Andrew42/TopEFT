@@ -34,6 +34,7 @@ ttll        = MGProcess(name='ttll'       ,process='ttll',pcard='ttll.dat'      
 ttllNoHiggs = MGProcess(name='ttllNoHiggs',process='ttll',pcard='ttllNoHiggs.dat',tdir='EFT-ttll_template')
 
 ttlnu = MGProcess(name='ttlnu',process='ttlnu',pcard='ttlnu.dat',tdir='EFT-ttlnu_template')
+ttllNuNuNoHiggs = MGProcess(name='ttllNuNuNoHiggs',process='ttll',pcard='ttllNuNuNoHiggs.dat',tdir='EFT-ttll_template')
 
 tllq        = MGProcess(name='tllq'       ,process='tllq',pcard='tllq.dat'       ,tdir='EFT-tllq_template')
 tllqNoHiggs = MGProcess(name='tllqNoHiggs',process='tllq',pcard='tllqNoHiggs.dat',tdir='EFT-tllq_template')
@@ -355,7 +356,8 @@ def main():
         'scanfiles/ttll_16DOldLimitsAxisScan_run1_scanpoints.txt',
         'scanfiles/ttll_16DOldLimitsAxisScan_run2_scanpoints.txt',
     ]
-    proc_list = [tllq4fMatchedNoHiggs,ttlnuJet,ttHJet,ttllNuNuJetNoHiggs,tHq4fMatched]
+    #proc_list = [tllq4fMatchedNoHiggs,ttlnuJet,ttHJet,ttllNuNuJetNoHiggs,tHq4fMatched]
+    proc_list = [ttH,ttHJet,ttlnu,ttlnuJet,ttllNuNuNoHiggs,ttllNuNuJetNoHiggs]
     dof_list  = [
         ctp,cpQM,ctW,ctZ,ctG,cbW,cpQ3,cptb,cpt,
         cQl3i,cQlMi,cQei,ctli,ctei,ctlSi,ctlTi
@@ -376,8 +378,8 @@ def main():
     # For using a different model
     gridpack.setOptions(coupling_string="FCNC=0 DIM6=1",replace_model="dim6top_LO_UFO_han")
     # For creating feynman diagrams
-    #gridpack.setOptions(btype=BatchType.LOCAL,save_diagrams=True,use_coupling_model=True)
-    #gridpack.setOptions(coupling_string="FCNC=0 DIM6^2=1 DIM6_ctZ^2=1 DIM6_ctW^2=1")
+    #gridpack.setOptions(btype=BatchType.LOCAL,save_diagrams=True,replace_model="dim6top_LO_UFO_each_coupling_order_v2020-05-19")
+    #gridpack.setOptions(coupling_string="FCNC=0 DIM6^2=1 DIM6_ctZ^2=1 DIM6_ctW^2=1") # For example
 
     if stype == ScanType.SLINSPACE:
         tag = tag + "AxisScan"

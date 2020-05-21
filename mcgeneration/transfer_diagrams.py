@@ -5,7 +5,8 @@ import subprocess
 # This script is used to move the feynman diagrams produced by running MadGraph to some desired location for easier browsing/viewing
 # NOTE: The MadGraph runs need to follow the p_c_r_* style naming convention for proper identification!
 
-OUTPUT_DIRECTORY = "/afs/cern.ch/user/a/awightma/www/eft_analysis/diagrams"
+# Example output dir:
+#OUTPUT_DIRECTORY = "/afs/cern.ch/user/a/awightma/www/eft_analysis/diagrams"
 
 # Search the specified locations for directories corresponding to MadGraph runs
 def getProcessDirectories(path='.',p_wl=[],c_wl=[],r_wl=[]):
@@ -44,7 +45,9 @@ def getSubProcessDirectories(path):
             continue
         elif len(f.split('_')) < 2:
             continue
-        elif f[:2] != "P0" and f[:2] != "P1":
+        #elif f[:2] != "P0" and f[:2] != "P1":
+        elif f[:1] != "P":
+            print "\nSkipping dir:" , f , "did you mean to do this?\n"
             #TODO: Change this to be more robust (e.g. via regex or something)
             continue
         dir_paths.append(tmp_path)
@@ -126,7 +129,7 @@ def cleanDiagram(fpath):
     subprocess.check_call(['sed','-i','-e','s| DIM6_[Aa-Zz0-9]*=0,||g',fpath])    # Remove any instance of the string ' DIM6_XYZ###=0,'
     subprocess.check_call(['sed','-i','-e','s| FCNC=0,||g',fpath])                # Remove any instance of the specific string ' FCNC=0,'
     subprocess.check_call(['sed','-i','-e','s|DIM6_||g'   ,fpath])                # Remove the 'DIM6_' prefix from the diagram
-    subprocess.check_call(['sed','-i','-e','s|DIM6=1, ||g',fpath])                # Remove uneeded 'DIM6=1' strings from the diagram
+    #subprocess.check_call(['sed','-i','-e','s|DIM6=1, ||g',fpath])                # Remove uneeded 'DIM6=1' strings from the diagram
     return
 
 # Transfers the Feynman diagrams from a particular MadGraph run to some output directory location
