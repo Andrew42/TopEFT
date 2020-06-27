@@ -37,5 +37,5 @@ define vl = ve vm vt
 define vl~ = ve~ vm~ vt~
 define w = w+ w-
 generate p p > t t~ w DIM6=1
-generate p p > t t~ w j DIM6=1
+add process p p > t t~ w j DIM6=1
 output SUBSETUP -nojpeg
