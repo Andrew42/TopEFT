@@ -49,6 +49,10 @@ tllq4fNoSchanWJet       = MGProcess(name='tllq4fNoSchanWJet'     ,process='tllq'
 tllq4fNoSchanW1JetOnly  = MGProcess(name='tllq4fNoSchanW1JetOnly',process='tllq',pcard='tllq4fNoSchanW1JetOnly.dat',tdir='tllq-4fMatched_template')
 tllq4fNoSchanWNoHiggs0p = MGProcess(name='tllq4fNoSchanWNoHiggs0p',process='tllq',pcard='tllq4fNoSchanWNoHiggs0p.dat',tdir='tllq-4fMatched_template')
 
+tllqJet4fNoSchanWNoHiggs = MGProcess(name='tllqJet4fNoSchanWNoHiggs',process='tllq',pcard='tllqJet4fNoSchanWNoHiggs.dat',tdir='tllq-4fMatched_template')
+tllqJet5fNoSchanWNoHiggs = MGProcess(name='tllqJet5fNoSchanWNoHiggs',process='tllq',pcard='tllqJet5fNoSchanWNoHiggs.dat',tdir='tllqJet-5fMatched_template')
+tllq5fNoSchanWNoHiggs = MGProcess(name='tllq5fNoSchanWNoHiggs',process='tllq',pcard='tllq5fNoSchanWNoHiggs.dat',tdir='tllqJet-5fMatched_template')
+
 ttW    = MGProcess(name='ttW',   process='ttW',pcard='ttW.dat',   tdir='EFT-ttH_template')
 ttWJet = MGProcess(name='ttWJet',process='ttW',pcard='ttWJet.dat',tdir='ttHJet_template')
 ttZ    = MGProcess(name='ttZ',   process='ttZ',pcard='ttZ.dat',   tdir='EFT-ttH_template')
@@ -381,7 +385,7 @@ def main():
     gridpack = Gridpack(stype=stype,btype=btype,default_limits=[-20.0,20.0])
     gridpack.setOptions(runcard_ops=rc_ops)
     # For using a different model
-    gridpack.setOptions(coupling_string="FCNC=0 DIM6=1",replace_model="dim6top_LO_UFO_han")
+    gridpack.setOptions(coupling_string="FCNC=0 DIM6=1",replace_model="dim6top_LO_UFO_HanV4_2")
     # For creating feynman diagrams
     #gridpack.setOptions(btype=BatchType.LOCAL,save_diagrams=True,replace_model="dim6top_LO_UFO_each_coupling_order_v2020-05-19")
     #gridpack.setOptions(coupling_string="FCNC=0 DIM6^2=1 DIM6_ctZ^2=1 DIM6_ctW^2=1") # For example
