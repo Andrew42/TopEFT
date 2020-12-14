@@ -20,10 +20,12 @@ if [ -d "$GENPRODPATH" ]; then
 else 
     mkdir -p ${GENPRODPATH}
     cd ${GENPRODPATH}/..
-    git clone -b mg26x https://github.com/cms-sw/genproductions.git genproductions 
+    git clone -b master https://github.com/cms-sw/genproductions.git genproductions 
     cd ${GENPRODPATH}
-    # copy relevant code  
-    for FILE in addons patches Utilities helpers scanfiles gridpack_generation.sh diagram_generation.sh clean_diagrams.sh submit_madpack_ttbareft.sh configure_gridpack.py transfer_gridpacks.py transfer_diagrams.py submit_cmsconnect_gridpack_generation.sh ; do 
+    # Checkout the repo so that it corresponds to some fixed point in development
+    git checkout 91b1bfb5f363d9d07c66d21a20dae19a0bb272d2
+    # Copy relevant code  
+    for FILE in addons helpers scanfiles gridpack_generation.sh diagram_generation.sh clean_diagrams.sh submit_madpack_ttbareft.sh configure_gridpack.py transfer_gridpacks.py transfer_diagrams.py submit_cmsconnect_gridpack_generation.sh ; do 
 	cp -r ${EFTMCPATH}/${FILE} ${GENPRODPATH}/bin/MadGraph5_aMCatNLO/.
     done
     cd ${GENPRODPATH}/.
