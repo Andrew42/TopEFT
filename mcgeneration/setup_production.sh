@@ -5,7 +5,8 @@
 EFTMCPATH=`pwd -P`
 # path should end with genproductions 
 GENPRODPATH=${EFTMCPATH}/../../genproductions
-if [ "$(hostname)" == "login.uscms.org" ]; then
+#if [ "$(hostname)" == "login.uscms.org" ]; then
+if [ "$(hostname)" == "login-el7.uscms.org" ]; then
     # path for cmsconnect submit node
     GENPRODPATH="/local-scratch/${USER}/genproductions"
 fi
@@ -23,9 +24,10 @@ else
     git clone -b master https://github.com/cms-sw/genproductions.git genproductions 
     cd ${GENPRODPATH}
     # Checkout the repo so that it corresponds to some fixed point in development
-    git checkout 91b1bfb5f363d9d07c66d21a20dae19a0bb272d2
+    git checkout 7ea7f6f81577d44a86bf9e7e6c98f7e082a59408
     # Copy relevant code  
     for FILE in addons helpers scanfiles gridpack_generation.sh diagram_generation.sh clean_diagrams.sh submit_madpack_ttbareft.sh configure_gridpack.py transfer_gridpacks.py transfer_diagrams.py submit_cmsconnect_gridpack_generation.sh ; do 
+    #for FILE in addons helpers scanfiles diagram_generation.sh clean_diagrams.sh submit_madpack_ttbareft.sh configure_gridpack.py transfer_gridpacks.py transfer_diagrams.py ; do 
 	cp -r ${EFTMCPATH}/${FILE} ${GENPRODPATH}/bin/MadGraph5_aMCatNLO/.
     done
     cd ${GENPRODPATH}/.

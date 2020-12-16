@@ -5,95 +5,95 @@ source Utilities/source_condor.sh
 
 create_codegen_jdl(){
 cat<<-EOF
-	Universe = vanilla 
-	Executable = $codegen_exe
-	Arguments = $card_name $card_dir
-	
-	Error = condor_log/job.err.\$(Cluster)-\$(Process) 
-	Output = condor_log/job.out.\$(Cluster)-\$(Process) 
-	Log = condor_log/job.log.\$(Cluster) 
-	
-	transfer_input_files = $input_files, gridpack_generation.sh, /usr/bin/unzip
-	transfer_output_files = ${card_name}.log, ${sandbox_output}
-	transfer_output_remaps = "${card_name}.log = ${card_name}_codegen.log"
-	+WantIOProxy=true
+    Universe = vanilla 
+    Executable = $codegen_exe
+    Arguments = $card_name $card_dir
+    
+    Error = condor_log/job.err.\$(Cluster)-\$(Process) 
+    Output = condor_log/job.out.\$(Cluster)-\$(Process) 
+    Log = condor_log/job.log.\$(Cluster) 
+    
+    transfer_input_files = $input_files, gridpack_generation.sh, /usr/bin/unzip
+    transfer_output_files = ${card_name}.log, ${sandbox_output}
+    transfer_output_remaps = "${card_name}.log = ${card_name}_codegen.log"
+    +WantIOProxy=true
         +IsGridpack=true
         +GridpackCard = "${card_name}"
-	
-	+REQUIRED_OS = "rhel6"
-	request_cpus = $cores
-	request_memory = $memory
-	Queue 1
+    
+    +REQUIRED_OS = "${rhel_ver}"
+    request_cpus = $cores
+    request_memory = $memory
+    Queue 1
 EOF
 }
 
 create_codegen_exe(){
 cat<<-EOF
-	#! /bin/bash
+    #! /bin/bash
 
-	# Condor scratch dir
-	condor_scratch=\$(pwd)
-	echo "\$condor_scratch" > _condor_scratch_dir.txt
-	
-	# Add unzip to the environment
-	if [ -x \$condor_scratch/unzip ]; then
-	    mkdir \$condor_scratch/local_bin
-	    mv \$condor_scratch/unzip \$condor_scratch/local_bin
-	    export PATH="\$PATH:\$condor_scratch/local_bin"
-	fi
+    # Condor scratch dir
+    condor_scratch=\$(pwd)
+    echo "\$condor_scratch" > _condor_scratch_dir.txt
+    
+    # Add unzip to the environment
+    if [ -x \$condor_scratch/unzip ]; then
+        mkdir \$condor_scratch/local_bin
+        mv \$condor_scratch/unzip \$condor_scratch/local_bin
+        export PATH="\$PATH:\$condor_scratch/local_bin"
+    fi
 
-	# Untar input files
-	tar xfz "$input_files"
-	
-	# Setup CMS framework
-	export VO_CMS_SW_DIR=/cvmfs/cms.cern.ch
-	source \$VO_CMS_SW_DIR/cmsset_default.sh
+    # Untar input files
+    tar xfz "$input_files"
+    
+    # Setup CMS framework
+    export VO_CMS_SW_DIR=/cvmfs/cms.cern.ch
+    source \$VO_CMS_SW_DIR/cmsset_default.sh
 
-	# Purdue wokaround
-	unset CXX CC FC
-	# Run
-	iscmsconnect=1 bash -x gridpack_generation.sh "${card_name}" "${card_dir}" "${workqueue}" CODEGEN "${scram_arch}" "${cmssw_version}"
-	exitcode=\$?
+    # Purdue wokaround
+    unset CXX CC FC
+    # Run
+    iscmsconnect=1 bash -x gridpack_generation.sh "${card_name}" "${card_dir}" "${workqueue}" CODEGEN "${scram_arch}" "${cmssw_version}"
+    exitcode=\$?
 
-	if [ \$exitcode -ne 0 ]; then
-	    echo "Something went wrong while running CODEGEN step. Exiting now."
-	    exit \$exitcode
-	fi
+    if [ \$exitcode -ne 0 ]; then
+        echo "Something went wrong while running CODEGEN step. Exiting now."
+        exit \$exitcode
+    fi
 
-	# Pack output and condor scratch dir info
-	cd "\${condor_scratch}/${card_name}"
-	mv "\${condor_scratch}/_condor_scratch_dir.txt" .
-	XZ_OPT="--lzma2=preset=9,dict=512MiB" tar -cJpsf "\${condor_scratch}/${sandbox_output}" "${card_name}_gridpack" "_condor_scratch_dir.txt"
-	# tar -jcf "\${condor_scratch}/$sandbox_output" "${card_name}_gridpack" "_condor_scratch_dir.txt"
+    # Pack output and condor scratch dir info
+    cd "\${condor_scratch}/${card_name}"
+    mv "\${condor_scratch}/_condor_scratch_dir.txt" .
+    XZ_OPT="--lzma2=preset=9,dict=512MiB" tar -cJpsf "\${condor_scratch}/${sandbox_output}" "${card_name}_gridpack" "_condor_scratch_dir.txt"
+    # tar -jcf "\${condor_scratch}/$sandbox_output" "${card_name}_gridpack" "_condor_scratch_dir.txt"
 
-	# Stage-out sandbox
-	# First, try XRootD via stash.osgconnect.net
-	echo ">> Copying sandbox via XRootD"
-	xrdcp -f "\${condor_scratch}/$sandbox_output" "root://stash.osgconnect.net:1094/${stash_tmpdir##/stash}/$sandbox_output"
-	exitcode=\$?
-	if [ \$exitcode -eq 0 ]; then
-	    exit 0
-	else
-	    echo "The xrdcp command below failed:"
-	    echo "xrdcp -f \${condor_scratch}$sandbox_output root://stash.osgconnect.net:1094/${stash_tmpdir##/stash}/$sandbox_output"
-	fi
+    # Stage-out sandbox
+    # First, try XRootD via stash.osgconnect.net
+    echo ">> Copying sandbox via XRootD"
+    xrdcp -f "\${condor_scratch}/$sandbox_output" "root://stash.osgconnect.net:1094/${stash_tmpdir##/stash}/$sandbox_output"
+    exitcode=\$?
+    if [ \$exitcode -eq 0 ]; then
+        exit 0
+    else
+        echo "The xrdcp command below failed:"
+        echo "xrdcp -f \${condor_scratch}$sandbox_output root://stash.osgconnect.net:1094/${stash_tmpdir##/stash}/$sandbox_output"
+    fi
         # Temporarily disable condor_chirp
         # until this feature comes back in CMS
-	## Second, try condor_chirp
-	#echo ">> Copying sandbox via condor_chirp"
-	#CONDOR_CHIRP_BIN=\$(command -v condor_chirp)
-	#if [ \$? != 0 ]; then
-	#    if [ -n "\${CONDOR_CONFIG}" ]; then
-	#        CONDOR_CHIRP_BIN="\$(dirname \$CONDOR_CONFIG)/main/condor/libexec/condor_chirp"
-	#    fi
-	#fi
-	#"\${CONDOR_CHIRP_BIN}" put -perm 644 "\${condor_scratch}/$sandbox_output" "$sandbox_output"
-	#exitcode=\$?
-	#if [ \$exitcode -ne 0 ]; then
-	#    echo "condor_chirp failed. Exiting with error code 210."
-	#    exit 210
-	#fi
-	#rm "\${condor_scratch}/$sandbox_output"
+    ## Second, try condor_chirp
+    #echo ">> Copying sandbox via condor_chirp"
+    #CONDOR_CHIRP_BIN=\$(command -v condor_chirp)
+    #if [ \$? != 0 ]; then
+    #    if [ -n "\${CONDOR_CONFIG}" ]; then
+    #        CONDOR_CHIRP_BIN="\$(dirname \$CONDOR_CONFIG)/main/condor/libexec/condor_chirp"
+    #    fi
+    #fi
+    #"\${CONDOR_CHIRP_BIN}" put -perm 644 "\${condor_scratch}/$sandbox_output" "$sandbox_output"
+    #exitcode=\$?
+    #if [ \$exitcode -ne 0 ]; then
+    #    echo "condor_chirp failed. Exiting with error code 210."
+    #    exit 210
+    #fi
+    #rm "\${condor_scratch}/$sandbox_output"
 
 EOF
 }
@@ -167,6 +167,28 @@ cores="${3:-1}"
 memory="${4:-2 Gb}"
 scram_arch="${5:-}"
 cmssw_version="${6:-}"
+
+export SYSTEM_RELEASE=`cat /etc/redhat-release`
+
+if [ -n "$5" ]; then
+  if [[ $scram_arch == *"slc6"* ]]; then
+    rhel_ver="rhel6"
+  elif [[ $scram_arch == *"slc7"* ]]; then
+    rhel_ver="rhel7"
+  else
+    echo "Invalid scram_arch is specified!"
+    if [ "${BASH_SOURCE[0]}" != "${0}" ]; then return 1; else exit 1; fi
+  fi
+else
+  if [[ $SYSTEM_RELEASE == *"release 6"* ]]; then
+    rhel_ver="rhel6"
+  elif [[ $SYSTEM_RELEASE == *"release 7"* ]]; then
+    rhel_ver="rhel7"
+  else 
+    echo "No default CMSSW for current OS!"
+      if [ "${BASH_SOURCE[0]}" != "${0}" ]; then return 1; else exit 1; fi        
+  fi
+fi
 
 parent_dir=$PWD
 
